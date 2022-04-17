@@ -1,0 +1,9 @@
+.columnParent {
+    display: flex
+}
+
+.columnChild {
+    flex-grow: 1;
+    flex-basis: 0px;
+    padding: 10px
+}
