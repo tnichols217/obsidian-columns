@@ -4,7 +4,7 @@ export default class ObsidianColumns extends Plugin {
 
 	async onload() {
 
-		this.registerMarkdownCodeBlockProcessor("md", (source, el, ctx) => {
+		this.registerMarkdownCodeBlockProcessor("col-md", (source, el, ctx) => {
 			const sourcePath = ctx.sourcePath;
 			let child = el.createDiv();
 			MarkdownRenderer.renderMarkdown(
