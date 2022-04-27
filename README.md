@@ -7,6 +7,16 @@ The md codeblock is just markdown
 The col codeblock renders each markdown element as its own column.
 - use the md codeblock to group elements as one column
 
+Ex:
+\`\```col
+\```col-md
+(Stuff inside the first column
+\```
+\```col-md
+(stuff inside the second column)
+\```
+\`\```
+
 You can also create columns by creating a list in the structure shown:
 - !!!col
     - (flex-grow)
@@ -14,7 +24,15 @@ You can also create columns by creating a list in the structure shown:
     - (flex-grow)
         - (Text in column 2)
 
-If the flex-grow value specified is not a number, it defaults to the value specified in styles.css
+Ex:
+- !!!col
+    - 1
+        - Hi, this is text in column 1
+    - 2
+        - This is in the column to the right
+        - This column is twice as wide as th first one
+
+If the flex-grow value specified is not a number, it defaults to the value specified in styles.css, by default 1
 
 ## TODO
 
