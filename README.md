@@ -18,6 +18,8 @@ Ex:
 \```\
 \`\```
 
+!!! **Dont forget to use additional backticks when using recursive codeblocks!** Ex: col has 4 ticks and col-md has 3
+
 You can also create columns by creating a list in the structure shown:
 - !!!col
     - (flex-grow)
