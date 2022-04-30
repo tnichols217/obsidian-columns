@@ -145,23 +145,19 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.empty();
 		containerEl.createEl('h2', { text: 'Settings for obsidian-columns' });
 
-		let keys = Object.keys(this.plugin.settings)
-		let vals = Object.values(this.plugin.settings)
-		let keyvals = Object.entries(this.plugin.settings)
+		let keyvals = Object.entries(DEFAULT_SETTINGS)
 
 		console.log(keyvals)
 
 		for (let keyval of keyvals) {
-			console.log(keyval)
-			console.log((this.plugin.settings as any)[keyval[0]].value)
 			new Setting(containerEl)
-				.setName((DEFAULT_SETTINGS as any)[keyval[0]].name)
-				.setDesc((DEFAULT_SETTINGS as any)[keyval[0]].desc)
+				.setName(keyval[1].name)
+				.setDesc(keyval[1].desc)
 				.addText(text => text
-					.setPlaceholder(String((DEFAULT_SETTINGS as any)[keyval[0]].value))
+					.setPlaceholder(String(keyval[1].value))
 					.setValue(String((this.plugin.settings as any)[keyval[0]].value))
 					.onChange((value) => {
-						keyval[1].value = parseObject(value, typeof (DEFAULT_SETTINGS as any)[keyval[0]].value);
+						keyval[1].value = parseObject(value, typeof keyval[1].value);
 						this.plugin.saveSettings();
 					}));
 		}
