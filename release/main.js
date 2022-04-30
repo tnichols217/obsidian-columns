@@ -86,7 +86,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
             if (listItem == null) {
               continue;
             }
-            if (!listItem.textContent.startsWith(TOKEN + COLUMNNAME)) {
+            if (!listItem.textContent.trim().startsWith(TOKEN + COLUMNNAME)) {
               processList(listItem);
               continue;
             }
