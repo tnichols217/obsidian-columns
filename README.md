@@ -1,6 +1,7 @@
 # Obsidian Columns
 
 Allows you to create columns in Obsidian
+This plugin also works on mobile! However, it does not flow continuously and still acts as normal columns
 
 Adds two codeblock languages: col and col-md.
 The md codeblock is just markdown
@@ -28,7 +29,7 @@ First column!
 >  More stuff inside.
 >> [!ERROR] Error description
 >>  Nested callout
->>  ```md
+>>  ```col-md
 >>  - example MD code
 >>  - more stuff
 >>  ```
