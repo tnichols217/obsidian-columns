@@ -11,11 +11,13 @@ interface settingItem<T> {
 }
 
 interface columnSettings {
-	wrapSize: settingItem<number>
+	wrapSize: settingItem<number>,
+	defaultSpan: settingItem<number>
 }
 
 const DEFAULT_SETTINGS: columnSettings = {
-	wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices"}
+	wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices"},
+	defaultSpan: { value: 1, name: "The default span of an item", desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting."}
 }
 
 let parseBoolean = (value: string) => {
@@ -35,6 +37,9 @@ let parseObject = (value: any, typ: string) => {
 }
 
 export default class ObsidianColumns extends Plugin {
+	generateCssString = (span: number) => {
+		return "flex-grow:" + span.toString() + "; flex-basis:" + (this.settings.wrapSize.value * span).toString() + "px" + "; width:" + (this.settings.wrapSize.value * span).toString() + "px"
+	}
 
 	settings: columnSettings;
 
@@ -67,7 +72,7 @@ export default class ObsidianColumns extends Plugin {
 			let parent = el.createEl("div", { cls: "columnParent" });
 			Array.from(child.children).forEach((c) => {
 				let cc = parent.createEl("div", { cls: "columnChild" })
-				cc.setAttribute("style", "flex-grow:1; flex-basis:" + this.settings.wrapSize.value.toString() + "px")
+				cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value))
 				cc.appendChild(c)
 			})
 		});
@@ -98,9 +103,9 @@ export default class ObsidianColumns extends Plugin {
 						let childDiv = colParent.createEl("div", { cls: "columnChild" })
 						let span = parseFloat(itemListItem.textContent.split("\n")[0].split(" ")[0])
 						if (isNaN(span)) {
-							span = 1
+							span = this.settings.defaultSpan.value
 						}
-						childDiv.setAttribute("style", "flex-grow:" + span.toString() + "; flex-basis:" + (this.settings.wrapSize.value * span).toString() + "px")
+						childDiv.setAttribute("style", this.generateCssString(span))
 						let afterText = false
 						processList(itemListItem)
 						for (let itemListItemChild of Array.from(itemListItem.childNodes)) {
