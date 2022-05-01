@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync, copyFile } from "fs";
 
+const FILES = ["main.js", "manifest.json", "styles.css"]
 const targetVersion = process.env.npm_package_version;
 
 // read minAppVersion from manifest.json and bump version to target version
@@ -13,4 +14,7 @@ let versions = JSON.parse(readFileSync("versions.json", "utf8"));
 versions[targetVersion] = minAppVersion;
 writeFileSync("versions.json", JSON.stringify(versions, null, "\t"));
 
-copyFile("nightly/*", "release/", () => {})
+console.log("test")
+for (let file of FILES) {
+    copyFile("nightly/" + file, "release/" + file, (e) => {if (e) {console.log(e)}})
+}
