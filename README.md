@@ -1,10 +1,11 @@
 # Obsidian Columns
 
-Allows you to create columns in Obsidian
-This plugin also works on mobile! However, it does not flow continuously and still acts as normal columns
+Allows you to create columns in Obsidian\
+This plugin also works on mobile with a column wrapping feature (that you can enable in settings)
 
-Adds two codeblock languages: col and col-md.
-The md codeblock is just markdown
+Adds two codeblock languages: col and col-md.\
+And special list syntax to create columns.\
+The col-md codeblock is just markdown\
 The col codeblock renders each markdown element as its own column.
 - use the md codeblock to group elements as one column
 
@@ -72,14 +73,16 @@ Produced by the MD code below:
 			  More example text inside this column
 ```
 
-If the flex-grow value specified is not a number, it defaults to the value 1
-
 ## Settings
 ### Minimum Width of Column
 This setting ensures that columns are a certain width. If not all the columns satisfy this width, extra columns will wrap to below (as rows).
 Technically, just sets the flex-basis attribute.
 
+### Default span
+This setting sets the default span value for a column if it is not explicitly specified. For the time being, col codeblocks have each column set to this value and cannot be changed.
+
 ## Upcoming features
 
 1. Enable syntax highlighting for editor.
 2. Have per column group and per column settings (custom settings for each column)
+3. Edit span for codeblocks
