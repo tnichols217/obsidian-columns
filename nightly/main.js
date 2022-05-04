@@ -55,9 +55,35 @@ var import_obsidian = __toModule(require("obsidian"));
 var COLUMNNAME = "col";
 var COLUMNMD = COLUMNNAME + "-md";
 var TOKEN = "!!!";
+var DEFAULT_SETTINGS = {
+  wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices" },
+  defaultSpan: { value: 1, name: "The default span of an item", desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting." }
+};
+var parseBoolean = (value) => {
+  return value == "yes" || value == "true";
+};
+var parseObject = (value, typ) => {
+  if (typ == "string") {
+    return value;
+  }
+  if (typ == "boolean") {
+    return parseBoolean(value);
+  }
+  if (typ == "number") {
+    return parseFloat(value);
+  }
+};
 var ObsidianColumns = class extends import_obsidian.Plugin {
+  constructor() {
+    super(...arguments);
+    this.generateCssString = (span) => {
+      return "flex-grow:" + span.toString() + "; flex-basis:" + (this.settings.wrapSize.value * span).toString() + "px; width:" + (this.settings.wrapSize.value * span).toString() + "px";
+    };
+  }
   onload() {
     return __async(this, null, function* () {
+      yield this.loadSettings();
+      this.addSettingTab(new SampleSettingTab(this.app, this));
       this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
         const sourcePath = ctx.sourcePath;
         let child = el.createDiv();
@@ -71,9 +97,12 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
         let parent = el.createEl("div", { cls: "columnParent" });
         Array.from(child.children).forEach((c) => {
           let cc = parent.createEl("div", { cls: "columnChild" });
+          cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value));
           cc.appendChild(c);
         });
       });
+      let createColumns = () => {
+      };
       let processList = (element) => {
         for (let child of Array.from(element.children)) {
           if (child == null) {
@@ -99,9 +128,10 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
             for (let itemListItem of Array.from(itemList.children)) {
               let childDiv = colParent.createEl("div", { cls: "columnChild" });
               let span = parseFloat(itemListItem.textContent.split("\n")[0].split(" ")[0]);
-              if (!isNaN(span)) {
-                childDiv.setAttribute("style", "flex-grow:" + span.toString());
+              if (isNaN(span)) {
+                span = this.settings.defaultSpan.value;
               }
+              childDiv.setAttribute("style", this.generateCssString(span));
               let afterText = false;
               processList(itemListItem);
               for (let itemListItemChild of Array.from(itemListItem.childNodes)) {
@@ -113,14 +143,55 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
                 }
               }
             }
+            let widget;
+            if (widget) {
+              widget.clear();
+            }
+            const activeView = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
+            if (activeView) {
+              console.log("av" + activeView);
+            }
           }
         }
       };
       this.registerMarkdownPostProcessor((element, context) => {
         processList(element);
       });
+      this.registerCodeMirror((cm) => {
+        console.log("cm");
+        console.log(cm);
+      });
     });
   }
   onunload() {
+  }
+  loadSettings() {
+    return __async(this, null, function* () {
+      this.settings = Object.assign({}, DEFAULT_SETTINGS, yield this.loadData());
+    });
+  }
+  saveSettings() {
+    return __async(this, null, function* () {
+      yield this.saveData(this.settings);
+    });
+  }
+};
+var SampleSettingTab = class extends import_obsidian.PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    containerEl.createEl("h2", { text: "Settings for obsidian-columns" });
+    let keyvals = Object.entries(DEFAULT_SETTINGS);
+    console.log(keyvals);
+    for (let keyval of keyvals) {
+      new import_obsidian.Setting(containerEl).setName(keyval[1].name).setDesc(keyval[1].desc).addText((text) => text.setPlaceholder(String(keyval[1].value)).setValue(String(this.plugin.settings[keyval[0]].value)).onChange((value) => {
+        keyval[1].value = parseObject(value, typeof keyval[1].value);
+        this.plugin.saveSettings();
+      }));
+    }
   }
 };
