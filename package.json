@@ -6,10 +6,11 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"version": "npm run build && node version-bump.mjs"
+		"version": "npm run build && node version-bump.mjs",
+		"mon": "nodemon -x yarn build -w main.ts"
 	},
 	"keywords": [],
-	"author": "",
+	"author": "Trevor Nichols",
 	"license": "GPL-3.0-or-later",
 	"devDependencies": {
 		"@types/node": "^16.11.6",
