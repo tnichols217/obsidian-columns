@@ -46,7 +46,7 @@ export default class ObsidianColumns extends Plugin {
 	async onload() {
 
 		await this.loadSettings();
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new ObsidianColumnsSettings(this.app, this));
 
 		this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
 			const sourcePath = ctx.sourcePath;
@@ -137,7 +137,7 @@ export default class ObsidianColumns extends Plugin {
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
+class ObsidianColumnsSettings extends PluginSettingTab {
 	plugin: ObsidianColumns;
 
 	constructor(app: App, plugin: ObsidianColumns) {
