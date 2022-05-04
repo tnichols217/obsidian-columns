@@ -1,4 +1,4 @@
-import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, Setting } from 'obsidian';
+import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, Setting, MarkdownView } from 'obsidian';
 
 const COLUMNNAME = "col"
 const COLUMNMD = COLUMNNAME + "-md"
@@ -16,8 +16,8 @@ interface columnSettings {
 }
 
 const DEFAULT_SETTINGS: columnSettings = {
-	wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices"},
-	defaultSpan: { value: 1, name: "The default span of an item", desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting."}
+	wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices" },
+	defaultSpan: { value: 1, name: "The default span of an item", desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting." }
 }
 
 let parseBoolean = (value: string) => {
