@@ -83,7 +83,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
   onload() {
     return __async(this, null, function* () {
       yield this.loadSettings();
-      this.addSettingTab(new SampleSettingTab(this.app, this));
+      this.addSettingTab(new ObsidianColumnsSettings(this.app, this));
       this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
         const sourcePath = ctx.sourcePath;
         let child = el.createDiv();
@@ -101,8 +101,6 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
           cc.appendChild(c);
         });
       });
-      let createColumns = () => {
-      };
       let processList = (element) => {
         for (let child of Array.from(element.children)) {
           if (child == null) {
@@ -143,23 +141,11 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
                 }
               }
             }
-            let widget;
-            if (widget) {
-              widget.clear();
-            }
-            const activeView = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
-            if (activeView) {
-              console.log("av" + activeView);
-            }
           }
         }
       };
       this.registerMarkdownPostProcessor((element, context) => {
         processList(element);
-      });
-      this.registerCodeMirror((cm) => {
-        console.log("cm");
-        console.log(cm);
       });
     });
   }
@@ -176,7 +162,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
     });
   }
 };
-var SampleSettingTab = class extends import_obsidian.PluginSettingTab {
+var ObsidianColumnsSettings = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;

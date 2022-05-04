@@ -16,5 +16,5 @@ writeFileSync("versions.json", JSON.stringify(versions, null, "\t"));
 
 console.log("test")
 for (let file of FILES) {
-    copyFile("nightly/" + file, "release/" + file, (e) => {if (e) {console.log(e)}})
+    copyFile(file, "release/" + file, (e) => {if (e) {console.log(e)}})
 }
