@@ -87,20 +87,23 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
       this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
         const sourcePath = ctx.sourcePath;
         let child = el.createDiv();
-        import_obsidian.MarkdownRenderer.renderMarkdown(source, child, sourcePath, null);
+        let renderChild = new import_obsidian.MarkdownRenderChild(child);
+        ctx.addChild(renderChild);
+        import_obsidian.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
       });
       this.registerMarkdownCodeBlockProcessor(COLUMNNAME, (source, el, ctx) => {
         const sourcePath = ctx.sourcePath;
-        let rows = source.split("\n");
         let child = createDiv();
-        import_obsidian.MarkdownRenderer.renderMarkdown(source, child, sourcePath, null);
+        let renderChild = new import_obsidian.MarkdownRenderChild(child);
+        ctx.addChild(renderChild);
+        import_obsidian.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
         let parent = el.createEl("div", { cls: "columnParent" });
         Array.from(child.children).forEach((c) => {
           let cc = parent.createEl("div", { cls: "columnChild" });
           cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value));
           cc.appendChild(c);
         });
-      });
+      }).sortOrder = 1e3;
       let processList = (element) => {
         for (let child of Array.from(element.children)) {
           if (child == null) {

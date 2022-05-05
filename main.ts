@@ -51,23 +51,26 @@ export default class ObsidianColumns extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
 			const sourcePath = ctx.sourcePath;
 			let child = el.createDiv();
+			let renderChild = new MarkdownRenderChild(child)
+			ctx.addChild(renderChild)
 			MarkdownRenderer.renderMarkdown(
 				source,
 				child,
 				sourcePath,
-				null
+				renderChild
 			);
-		});
+		})
 
 		this.registerMarkdownCodeBlockProcessor(COLUMNNAME, (source, el, ctx) => {
 			const sourcePath = ctx.sourcePath;
-			let rows = source.split("\n");
 			let child = createDiv();
+			let renderChild = new MarkdownRenderChild(child)
+			ctx.addChild(renderChild)
 			MarkdownRenderer.renderMarkdown(
 				source,
 				child,
 				sourcePath,
-				null
+				renderChild
 			);
 			let parent = el.createEl("div", { cls: "columnParent" });
 			Array.from(child.children).forEach((c) => {
@@ -75,7 +78,7 @@ export default class ObsidianColumns extends Plugin {
 				cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value))
 				cc.appendChild(c)
 			})
-		});
+		}).sortOrder = 1000
 
 		let processList = (element: Element) => {
 			for (let child of Array.from(element.children)) {
