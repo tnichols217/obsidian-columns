@@ -78,7 +78,7 @@ export default class ObsidianColumns extends Plugin {
 				cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value))
 				cc.appendChild(c)
 			})
-		}).sortOrder = 1000
+		})
 
 		let processList = (element: Element) => {
 			for (let child of Array.from(element.children)) {

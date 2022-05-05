@@ -103,7 +103,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
           cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value));
           cc.appendChild(c);
         });
-      }).sortOrder = 1e3;
+      });
       let processList = (element) => {
         for (let child of Array.from(element.children)) {
           if (child == null) {
