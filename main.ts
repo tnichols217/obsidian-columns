@@ -1,4 +1,4 @@
-import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, Setting, MarkdownView } from 'obsidian';
+import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, Setting, MarkdownView, MarkdownPostProcessorContext } from 'obsidian';
 
 const COLUMNNAME = "col"
 const COLUMNMD = COLUMNNAME + "-md"
@@ -33,6 +33,27 @@ let parseObject = (value: any, typ: string) => {
 	}
 	if (typ == "number") {
 		return parseFloat(value)
+	}
+}
+
+let processChild = (c: HTMLElement) => {
+	if (c.firstChild != null && "tagName" in c.firstChild && (c.firstChild as HTMLElement).tagName == "BR") {
+		c.removeChild(c.firstChild)
+	}
+	let firstChild = c
+
+	while (firstChild != null) {
+		if ("style" in firstChild) {
+			firstChild.style.marginTop = "0px"
+		}
+		firstChild = (firstChild.firstChild as HTMLElement)
+	}
+	let lastChild = c
+	while (lastChild != null) {
+		if ("style" in lastChild) {
+			lastChild.style.marginBottom = "0px"
+		}
+		lastChild = (lastChild.lastChild as HTMLElement)
 	}
 }
 
@@ -73,14 +94,17 @@ export default class ObsidianColumns extends Plugin {
 				renderChild
 			);
 			let parent = el.createEl("div", { cls: "columnParent" });
-			Array.from(child.children).forEach((c) => {
+			Array.from(child.children).forEach((c: HTMLElement) => {
 				let cc = parent.createEl("div", { cls: "columnChild" })
+				let renderCc = new MarkdownRenderChild(cc)
+				ctx.addChild(renderCc)
 				cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value))
 				cc.appendChild(c)
+				processChild(c)
 			})
 		})
 
-		let processList = (element: Element) => {
+		let processList = (element: Element, context: MarkdownPostProcessorContext) => {
 			for (let child of Array.from(element.children)) {
 				if (child == null) {
 					continue
@@ -93,24 +117,28 @@ export default class ObsidianColumns extends Plugin {
 						continue
 					}
 					if (!listItem.textContent.trim().startsWith(TOKEN + COLUMNNAME)) {
-						processList(listItem)
+						processList(listItem, context)
 						continue
 					}
 					child.removeChild(listItem)
 					let colParent = element.createEl("div", { cls: "columnParent" })
+					let renderColP = new MarkdownRenderChild(colParent)
+					context.addChild(renderColP)
 					let itemList = listItem.querySelector("ul, ol")
 					if (itemList == null) {
 						continue
 					}
 					for (let itemListItem of Array.from(itemList.children)) {
 						let childDiv = colParent.createEl("div", { cls: "columnChild" })
+						let renderColC = new MarkdownRenderChild(childDiv)
+						context.addChild(renderColC)
 						let span = parseFloat(itemListItem.textContent.split("\n")[0].split(" ")[0])
 						if (isNaN(span)) {
 							span = this.settings.defaultSpan.value
 						}
 						childDiv.setAttribute("style", this.generateCssString(span))
 						let afterText = false
-						processList(itemListItem)
+						processList(itemListItem, context)
 						for (let itemListItemChild of Array.from(itemListItem.childNodes)) {
 							if (afterText) {
 								childDiv.appendChild(itemListItemChild)
@@ -119,12 +147,13 @@ export default class ObsidianColumns extends Plugin {
 								afterText = true
 							}
 						}
+						processChild(childDiv)
 					}
 				}
 			}
 		}
 
-		this.registerMarkdownPostProcessor((element, context) => { processList(element) });
+		this.registerMarkdownPostProcessor((element, context) => { processList(element, context) });
 	}
 
 	onunload() {

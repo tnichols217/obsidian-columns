@@ -1,11 +1,11 @@
 .columnParent {
     display: flex;
-    padding: 5px 5px;
+    padding: 15px 20px;
     flex-wrap: wrap;
+    gap: 20px;
 }
 
 .columnChild {
     flex-grow: 1;
     flex-basis: 0px;
-    padding: 0px 10px;
 }

@@ -73,6 +73,25 @@ var parseObject = (value, typ) => {
     return parseFloat(value);
   }
 };
+var processChild = (c) => {
+  if (c.firstChild != null && "tagName" in c.firstChild && c.firstChild.tagName == "BR") {
+    c.removeChild(c.firstChild);
+  }
+  let firstChild = c;
+  while (firstChild != null) {
+    if ("style" in firstChild) {
+      firstChild.style.marginTop = "0px";
+    }
+    firstChild = firstChild.firstChild;
+  }
+  let lastChild = c;
+  while (lastChild != null) {
+    if ("style" in lastChild) {
+      lastChild.style.marginBottom = "0px";
+    }
+    lastChild = lastChild.lastChild;
+  }
+};
 var ObsidianColumns = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
@@ -100,11 +119,14 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
         let parent = el.createEl("div", { cls: "columnParent" });
         Array.from(child.children).forEach((c) => {
           let cc = parent.createEl("div", { cls: "columnChild" });
+          let renderCc = new import_obsidian.MarkdownRenderChild(cc);
+          ctx.addChild(renderCc);
           cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value));
           cc.appendChild(c);
+          processChild(c);
         });
-      }).sortOrder = 1e3;
-      let processList = (element) => {
+      });
+      let processList = (element, context) => {
         for (let child of Array.from(element.children)) {
           if (child == null) {
             continue;
@@ -117,24 +139,28 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
               continue;
             }
             if (!listItem.textContent.trim().startsWith(TOKEN + COLUMNNAME)) {
-              processList(listItem);
+              processList(listItem, context);
               continue;
             }
             child.removeChild(listItem);
             let colParent = element.createEl("div", { cls: "columnParent" });
+            let renderColP = new import_obsidian.MarkdownRenderChild(colParent);
+            context.addChild(renderColP);
             let itemList = listItem.querySelector("ul, ol");
             if (itemList == null) {
               continue;
             }
             for (let itemListItem of Array.from(itemList.children)) {
               let childDiv = colParent.createEl("div", { cls: "columnChild" });
+              let renderColC = new import_obsidian.MarkdownRenderChild(childDiv);
+              context.addChild(renderColC);
               let span = parseFloat(itemListItem.textContent.split("\n")[0].split(" ")[0]);
               if (isNaN(span)) {
                 span = this.settings.defaultSpan.value;
               }
               childDiv.setAttribute("style", this.generateCssString(span));
               let afterText = false;
-              processList(itemListItem);
+              processList(itemListItem, context);
               for (let itemListItemChild of Array.from(itemListItem.childNodes)) {
                 if (afterText) {
                   childDiv.appendChild(itemListItemChild);
@@ -143,12 +169,13 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
                   afterText = true;
                 }
               }
+              processChild(childDiv);
             }
           }
         }
       };
       this.registerMarkdownPostProcessor((element, context) => {
-        processList(element);
+        processList(element, context);
       });
     });
   }
