@@ -9,6 +9,20 @@ The col-md codeblock is just markdown\
 The col codeblock renders each markdown element as its own column.
 - use the md codeblock to group elements as one column
 
+## col-md
+The col-md block has a settings header that is defined as everything above a `===` delimiter
+For example, to set the flexGrow value:
+
+````md
+```col-md
+flexGrow=2
+===
+MD to be rendered
+```
+````
+
+## Examples
+
 ![image](https://user-images.githubusercontent.com/62992267/165693107-a19aa048-62e4-44a2-ad23-3bff41deb865.png)
 
 Produced by the MD below:
@@ -85,7 +99,6 @@ This setting sets the default span value for a column if it is not explicitly sp
 
 1. Enable syntax highlighting for editor.
 2. Have per column group and per column settings (custom settings for each column)
-3. Edit span for codeblocks
 
 If you enjoy my plugin, please consider supporting me:
 

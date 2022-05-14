@@ -55,48 +55,76 @@ var import_obsidian = __toModule(require("obsidian"));
 var COLUMNNAME = "col";
 var COLUMNMD = COLUMNNAME + "-md";
 var TOKEN = "!!!";
+var SETTINGSDELIM = "\n===\n";
 var DEFAULT_SETTINGS = {
   wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices" },
   defaultSpan: { value: 1, name: "The default span of an item", desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting." }
 };
-var parseBoolean = (value) => {
-  return value == "yes" || value == "true";
-};
-var parseObject = (value, typ) => {
-  if (typ == "string") {
-    return value;
-  }
-  if (typ == "boolean") {
-    return parseBoolean(value);
-  }
-  if (typ == "number") {
-    return parseFloat(value);
-  }
-};
-var processChild = (c) => {
-  if (c.firstChild != null && "tagName" in c.firstChild && c.firstChild.tagName == "BR") {
-    c.removeChild(c.firstChild);
-  }
-  let firstChild = c;
-  while (firstChild != null) {
-    if ("style" in firstChild) {
-      firstChild.style.marginTop = "0px";
-    }
-    firstChild = firstChild.firstChild;
-  }
-  let lastChild = c;
-  while (lastChild != null) {
-    if ("style" in lastChild) {
-      lastChild.style.marginBottom = "0px";
-    }
-    lastChild = lastChild.lastChild;
-  }
+var parseSettings = (settings) => {
+  let o = {};
+  settings.split("\n").map((i) => {
+    return i.split(";");
+  }).reduce((a, b) => {
+    a.push(...b);
+    return a;
+  }).map((i) => {
+    return i.split("=").map((j) => {
+      return j.trim();
+    }).slice(0, 2);
+  }).forEach((i) => {
+    o[i[0]] = i[1];
+  });
+  return o;
 };
 var ObsidianColumns = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
     this.generateCssString = (span) => {
-      return "flex-grow:" + span.toString() + "; flex-basis:" + (this.settings.wrapSize.value * span).toString() + "px; width:" + (this.settings.wrapSize.value * span).toString() + "px";
+      let o = {};
+      o.flexGrow = span.toString();
+      o.flexBasis = (this.settings.wrapSize.value * span).toString() + "px";
+      o.width = (this.settings.wrapSize.value * span).toString() + "px";
+      console.log(o);
+      return o;
+    };
+    this.applyStyle = (el, styles) => {
+      console.log(el.style);
+      console.log(styles);
+      Object.assign(el.style, styles);
+      console.log(el.style);
+    };
+    this.parseBoolean = (value) => {
+      return value == "yes" || value == "true";
+    };
+    this.parseObject = (value, typ) => {
+      if (typ == "string") {
+        return value;
+      }
+      if (typ == "boolean") {
+        return this.parseBoolean(value);
+      }
+      if (typ == "number") {
+        return parseFloat(value);
+      }
+    };
+    this.processChild = (c) => {
+      if (c.firstChild != null && "tagName" in c.firstChild && c.firstChild.tagName == "BR") {
+        c.removeChild(c.firstChild);
+      }
+      let firstChild = c;
+      while (firstChild != null) {
+        if ("style" in firstChild) {
+          firstChild.style.marginTop = "0px";
+        }
+        firstChild = firstChild.firstChild;
+      }
+      let lastChild = c;
+      while (lastChild != null) {
+        if ("style" in lastChild) {
+          lastChild.style.marginBottom = "0px";
+        }
+        lastChild = lastChild.lastChild;
+      }
     };
   }
   onload() {
@@ -104,11 +132,24 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
       yield this.loadSettings();
       this.addSettingTab(new ObsidianColumnsSettings(this.app, this));
       this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
+        let split = source.split(SETTINGSDELIM);
+        let settings = {};
+        if (split.length > 1) {
+          source = split.slice(1).join(SETTINGSDELIM);
+          settings = parseSettings(split[0]);
+        }
+        console.log(settings);
         const sourcePath = ctx.sourcePath;
         let child = el.createDiv();
         let renderChild = new import_obsidian.MarkdownRenderChild(child);
         ctx.addChild(renderChild);
         import_obsidian.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
+        if ("flexGrow" in settings) {
+          let flexGrow = parseFloat(settings.flexGrow);
+          let CSS = this.generateCssString(flexGrow);
+          delete CSS.width;
+          this.applyStyle(child, CSS);
+        }
       });
       this.registerMarkdownCodeBlockProcessor(COLUMNNAME, (source, el, ctx) => {
         const sourcePath = ctx.sourcePath;
@@ -121,9 +162,17 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
           let cc = parent.createEl("div", { cls: "columnChild" });
           let renderCc = new import_obsidian.MarkdownRenderChild(cc);
           ctx.addChild(renderCc);
-          cc.setAttribute("style", this.generateCssString(this.settings.defaultSpan.value));
+          console.log(cc.style.flexGrow);
+          if (cc.style.flexGrow != "") {
+            this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value));
+          }
           cc.appendChild(c);
-          processChild(c);
+          if (c.classList.contains("block-language-" + COLUMNMD) && c.childNodes[0].style.flexGrow != "") {
+            cc.style.flexGrow = c.childNodes[0].style.flexGrow;
+            cc.style.flexBasis = c.childNodes[0].style.flexBasis;
+            cc.style.width = c.childNodes[0].style.flexBasis;
+          }
+          this.processChild(c);
         });
       });
       let processList = (element, context) => {
@@ -158,7 +207,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
               if (isNaN(span)) {
                 span = this.settings.defaultSpan.value;
               }
-              childDiv.setAttribute("style", this.generateCssString(span));
+              this.applyStyle(childDiv, this.generateCssString(span));
               let afterText = false;
               processList(itemListItem, context);
               for (let itemListItemChild of Array.from(itemListItem.childNodes)) {
@@ -169,7 +218,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
                   afterText = true;
                 }
               }
-              processChild(childDiv);
+              this.processChild(childDiv);
             }
           }
         }
@@ -183,12 +232,24 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
   }
   loadSettings() {
     return __async(this, null, function* () {
-      this.settings = Object.assign({}, DEFAULT_SETTINGS, yield this.loadData());
+      this.settings = DEFAULT_SETTINGS;
+      this.loadData().then((data) => {
+        if (data) {
+          let items = Object.entries(data);
+          items.forEach((item) => {
+            this.settings[item[0]].value = item[1];
+          });
+        }
+      });
     });
   }
   saveSettings() {
     return __async(this, null, function* () {
-      yield this.saveData(this.settings);
+      let saveData = {};
+      Object.entries(this.settings).forEach((i) => {
+        saveData[i[0]] = i[1].value;
+      });
+      yield this.saveData(saveData);
     });
   }
 };
@@ -202,12 +263,19 @@ var ObsidianColumnsSettings = class extends import_obsidian.PluginSettingTab {
     containerEl.empty();
     containerEl.createEl("h2", { text: "Settings for obsidian-columns" });
     let keyvals = Object.entries(DEFAULT_SETTINGS);
-    console.log(keyvals);
     for (let keyval of keyvals) {
-      new import_obsidian.Setting(containerEl).setName(keyval[1].name).setDesc(keyval[1].desc).addText((text) => text.setPlaceholder(String(keyval[1].value)).setValue(String(this.plugin.settings[keyval[0]].value)).onChange((value) => {
-        keyval[1].value = parseObject(value, typeof keyval[1].value);
-        this.plugin.saveSettings();
-      }));
+      let setting = new import_obsidian.Setting(containerEl).setName(keyval[1].name).setDesc(keyval[1].desc);
+      if (typeof keyval[1].value == "boolean") {
+        setting.addToggle((toggle) => toggle.setValue(this.plugin.settings[keyval[0]].value).onChange((bool) => {
+          this.plugin.settings[keyval[0]].value = bool;
+          this.plugin.saveSettings();
+        }));
+      } else {
+        setting.addText((text) => text.setPlaceholder(String(keyval[1].value)).setValue(String(this.plugin.settings[keyval[0]].value)).onChange((value) => {
+          this.plugin.settings[keyval[0]].value = this.plugin.parseObject(value, typeof keyval[1].value);
+          this.plugin.saveSettings();
+        }));
+      }
     }
   }
 };
