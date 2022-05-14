@@ -84,14 +84,10 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
       o.flexGrow = span.toString();
       o.flexBasis = (this.settings.wrapSize.value * span).toString() + "px";
       o.width = (this.settings.wrapSize.value * span).toString() + "px";
-      console.log(o);
       return o;
     };
     this.applyStyle = (el, styles) => {
-      console.log(el.style);
-      console.log(styles);
       Object.assign(el.style, styles);
-      console.log(el.style);
     };
     this.parseBoolean = (value) => {
       return value == "yes" || value == "true";
@@ -138,7 +134,6 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
           source = split.slice(1).join(SETTINGSDELIM);
           settings = parseSettings(split[0]);
         }
-        console.log(settings);
         const sourcePath = ctx.sourcePath;
         let child = el.createDiv();
         let renderChild = new import_obsidian.MarkdownRenderChild(child);
@@ -162,10 +157,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
           let cc = parent.createEl("div", { cls: "columnChild" });
           let renderCc = new import_obsidian.MarkdownRenderChild(cc);
           ctx.addChild(renderCc);
-          console.log(cc.style.flexGrow);
-          if (cc.style.flexGrow != "") {
-            this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value));
-          }
+          this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value));
           cc.appendChild(c);
           if (c.classList.contains("block-language-" + COLUMNMD) && c.childNodes[0].style.flexGrow != "") {
             cc.style.flexGrow = c.childNodes[0].style.flexGrow;

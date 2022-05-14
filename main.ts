@@ -44,15 +44,11 @@ export default class ObsidianColumns extends Plugin {
 		o.flexGrow = span.toString()
 		o.flexBasis = (this.settings.wrapSize.value * span).toString() + "px"
 		o.width = (this.settings.wrapSize.value * span).toString() + "px"
-		console.log(o)
 		return o
 	}
 
 	applyStyle = (el: HTMLElement, styles: CSSStyleDeclaration) => {
-		console.log(el.style)
-		console.log(styles)
 		Object.assign(el.style, styles)
-		console.log(el.style)
 	}
 
 	settings: ColumnSettings;
@@ -107,8 +103,6 @@ export default class ObsidianColumns extends Plugin {
 				settings = parseSettings(split[0])
 			}
 
-			console.log(settings)
-
 			const sourcePath = ctx.sourcePath;
 			let child = el.createDiv();
 			let renderChild = new MarkdownRenderChild(child)
@@ -143,10 +137,7 @@ export default class ObsidianColumns extends Plugin {
 				let cc = parent.createEl("div", { cls: "columnChild" })
 				let renderCc = new MarkdownRenderChild(cc)
 				ctx.addChild(renderCc)
-				console.log(cc.style.flexGrow)
-				if (cc.style.flexGrow != "") {
-					this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value))
-				}
+				this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value))
 				cc.appendChild(c)
 				if (c.classList.contains("block-language-" + COLUMNMD) && (c.childNodes[0] as HTMLElement).style.flexGrow != "") {
 					cc.style.flexGrow = (c.childNodes[0] as HTMLElement).style.flexGrow
