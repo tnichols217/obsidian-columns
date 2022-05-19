@@ -1,6 +1,7 @@
 import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, MarkdownPostProcessorContext } from 'obsidian';
 import { SettingItem, display, loadSettings, saveSettings } from 'obsidian-settings/settings'
 
+const NAME = "Obsidian Columns"
 const COLUMNNAME = "col"
 const COLUMNMD = COLUMNNAME + "-md"
 const TOKEN = "!!!"
@@ -217,6 +218,6 @@ class ObsidianColumnsSettings extends PluginSettingTab {
 	}
 
 	display(): void {
-		display(this, DEFAULT_SETTINGS)
+		display(this, DEFAULT_SETTINGS, NAME)
 	}
 }
