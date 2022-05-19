@@ -1,17 +1,12 @@
-import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, Setting, MarkdownView, MarkdownPostProcessorContext } from 'obsidian';
+import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, MarkdownPostProcessorContext } from 'obsidian';
+import { SettingItem, display, loadSettings, saveSettings } from 'obsidian-settings/settings'
 
 const COLUMNNAME = "col"
 const COLUMNMD = COLUMNNAME + "-md"
 const TOKEN = "!!!"
 const SETTINGSDELIM = "\n===\n"
 
-interface SettingItem<T> {
-	value: T
-	name?: string
-	desc?: string
-}
-
-interface ColumnSettings {
+export interface ColumnSettings {
 	wrapSize: SettingItem<number>,
 	defaultSpan: SettingItem<number>
 }
@@ -205,23 +200,11 @@ export default class ObsidianColumns extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = DEFAULT_SETTINGS
-		this.loadData().then((data) => {
-			if (data) {
-				let items = Object.entries(data)
-				items.forEach((item:[string, string]) => {
-					(this.settings as any)[item[0]].value = item[1]
-				})
-			}
-		})
+		loadSettings(this, DEFAULT_SETTINGS)
 	}
 
 	async saveSettings() {
-		let saveData:any = {}
-		Object.entries(this.settings).forEach((i) => {
-			saveData[i[0]] = (i[1] as SettingItem<any>).value
-		})
-		await this.saveData(saveData);
+		await saveSettings(this, DEFAULT_SETTINGS)
 	}
 }
 
@@ -234,35 +217,6 @@ class ObsidianColumnsSettings extends PluginSettingTab {
 	}
 
 	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
-		containerEl.createEl('h2', { text: 'Settings for obsidian-columns' });
-
-		let keyvals = Object.entries(DEFAULT_SETTINGS)
-
-		for (let keyval of keyvals) {
-			let setting = new Setting(containerEl)
-				.setName(keyval[1].name)
-				.setDesc(keyval[1].desc)
-
-			if (typeof keyval[1].value == "boolean") {
-				setting.addToggle(toggle => toggle
-					.setValue((this.plugin.settings as any)[keyval[0]].value)
-					.onChange((bool) => {
-						(this.plugin.settings as any)[keyval[0]].value = bool
-						this.plugin.saveSettings()
-					})
-				)
-			} else {
-				setting.addText(text => text
-					.setPlaceholder(String(keyval[1].value))
-					.setValue(String((this.plugin.settings as any)[keyval[0]].value))
-					.onChange((value) => {
-						(this.plugin.settings as any)[keyval[0]].value = this.plugin.parseObject(value, typeof keyval[1].value)
-						this.plugin.saveSettings()
-					})
-				)
-			}
-		}
+		display(this, DEFAULT_SETTINGS)
 	}
 }
