@@ -48,22 +48,6 @@ export default class ObsidianColumns extends Plugin {
 	}
 
 	settings: ColumnSettings;
-
-	parseBoolean = (value: string) => {
-		return (value == "yes" || value == "true")
-	}
-	
-	parseObject = (value: any, typ: string) => {
-		if (typ == "string") {
-			return value
-		}
-		if (typ == "boolean") {
-			return this.parseBoolean(value)
-		}
-		if (typ == "number") {
-			return parseFloat(value)
-		}
-	}
 	
 	processChild = (c: HTMLElement) => {
 		if (c.firstChild != null && "tagName" in c.firstChild && (c.firstChild as HTMLElement).tagName == "BR") {
