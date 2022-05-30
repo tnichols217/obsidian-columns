@@ -51,7 +51,67 @@ var __async = (__this, __arguments, generator) => {
 __export(exports, {
   default: () => ObsidianColumns
 });
+var import_obsidian2 = __toModule(require("obsidian"));
+
+// obsidian-settings/settings.ts
 var import_obsidian = __toModule(require("obsidian"));
+var parseBoolean = (value) => {
+  return value == "yes" || value == "true";
+};
+var parseObject = (value, typ) => {
+  if (typ == "string") {
+    return value;
+  }
+  if (typ == "boolean") {
+    return parseBoolean(value);
+  }
+  if (typ == "number") {
+    return parseFloat(value);
+  }
+};
+function display(obj, DEFAULT_SETTINGS2, name) {
+  const { containerEl } = obj;
+  containerEl.empty();
+  containerEl.createEl("h2", { text: "Settings for " + name });
+  let keyvals = Object.entries(DEFAULT_SETTINGS2);
+  for (let keyval of keyvals) {
+    let setting = new import_obsidian.Setting(containerEl).setName(keyval[1].name).setDesc(keyval[1].desc);
+    if (typeof keyval[1].value == "boolean") {
+      setting.addToggle((toggle) => toggle.setValue(obj.plugin.settings[keyval[0]].value).onChange((bool) => {
+        obj.plugin.settings[keyval[0]].value = bool;
+        obj.plugin.saveSettings();
+      }));
+    } else {
+      setting.addText((text) => text.setPlaceholder(String(keyval[1].value)).setValue(String(obj.plugin.settings[keyval[0]].value)).onChange((value) => {
+        obj.plugin.settings[keyval[0]].value = parseObject(value, typeof keyval[1].value);
+        obj.plugin.saveSettings();
+      }));
+    }
+  }
+}
+function loadSettings(obj, DEFAULT_SETTINGS2) {
+  obj.settings = DEFAULT_SETTINGS2;
+  obj.loadData().then((data) => {
+    if (data) {
+      let items = Object.entries(data);
+      items.forEach((item) => {
+        obj.settings[item[0]].value = item[1];
+      });
+    }
+  });
+}
+function saveSettings(obj, DEFAULT_SETTINGS2) {
+  return __async(this, null, function* () {
+    let saveData = {};
+    Object.entries(obj.settings).forEach((i) => {
+      saveData[i[0]] = i[1].value;
+    });
+    yield obj.saveData(saveData);
+  });
+}
+
+// main.ts
+var NAME = "Obsidian Columns";
 var COLUMNNAME = "col";
 var COLUMNMD = COLUMNNAME + "-md";
 var TOKEN = "!!!";
@@ -76,7 +136,7 @@ var parseSettings = (settings) => {
   });
   return o;
 };
-var ObsidianColumns = class extends import_obsidian.Plugin {
+var ObsidianColumns = class extends import_obsidian2.Plugin {
   constructor() {
     super(...arguments);
     this.generateCssString = (span) => {
@@ -88,20 +148,6 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
     };
     this.applyStyle = (el, styles) => {
       Object.assign(el.style, styles);
-    };
-    this.parseBoolean = (value) => {
-      return value == "yes" || value == "true";
-    };
-    this.parseObject = (value, typ) => {
-      if (typ == "string") {
-        return value;
-      }
-      if (typ == "boolean") {
-        return this.parseBoolean(value);
-      }
-      if (typ == "number") {
-        return parseFloat(value);
-      }
     };
     this.processChild = (c) => {
       if (c.firstChild != null && "tagName" in c.firstChild && c.firstChild.tagName == "BR") {
@@ -136,9 +182,9 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
         }
         const sourcePath = ctx.sourcePath;
         let child = el.createDiv();
-        let renderChild = new import_obsidian.MarkdownRenderChild(child);
+        let renderChild = new import_obsidian2.MarkdownRenderChild(child);
         ctx.addChild(renderChild);
-        import_obsidian.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
+        import_obsidian2.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
         if ("flexGrow" in settings) {
           let flexGrow = parseFloat(settings.flexGrow);
           let CSS = this.generateCssString(flexGrow);
@@ -149,13 +195,13 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
       this.registerMarkdownCodeBlockProcessor(COLUMNNAME, (source, el, ctx) => {
         const sourcePath = ctx.sourcePath;
         let child = createDiv();
-        let renderChild = new import_obsidian.MarkdownRenderChild(child);
+        let renderChild = new import_obsidian2.MarkdownRenderChild(child);
         ctx.addChild(renderChild);
-        import_obsidian.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
+        import_obsidian2.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
         let parent = el.createEl("div", { cls: "columnParent" });
         Array.from(child.children).forEach((c) => {
           let cc = parent.createEl("div", { cls: "columnChild" });
-          let renderCc = new import_obsidian.MarkdownRenderChild(cc);
+          let renderCc = new import_obsidian2.MarkdownRenderChild(cc);
           ctx.addChild(renderCc);
           this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value));
           cc.appendChild(c);
@@ -185,7 +231,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
             }
             child.removeChild(listItem);
             let colParent = element.createEl("div", { cls: "columnParent" });
-            let renderColP = new import_obsidian.MarkdownRenderChild(colParent);
+            let renderColP = new import_obsidian2.MarkdownRenderChild(colParent);
             context.addChild(renderColP);
             let itemList = listItem.querySelector("ul, ol");
             if (itemList == null) {
@@ -193,7 +239,7 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
             }
             for (let itemListItem of Array.from(itemList.children)) {
               let childDiv = colParent.createEl("div", { cls: "columnChild" });
-              let renderColC = new import_obsidian.MarkdownRenderChild(childDiv);
+              let renderColC = new import_obsidian2.MarkdownRenderChild(childDiv);
               context.addChild(renderColC);
               let span = parseFloat(itemListItem.textContent.split("\n")[0].split(" ")[0]);
               if (isNaN(span)) {
@@ -224,50 +270,21 @@ var ObsidianColumns = class extends import_obsidian.Plugin {
   }
   loadSettings() {
     return __async(this, null, function* () {
-      this.settings = DEFAULT_SETTINGS;
-      this.loadData().then((data) => {
-        if (data) {
-          let items = Object.entries(data);
-          items.forEach((item) => {
-            this.settings[item[0]].value = item[1];
-          });
-        }
-      });
+      loadSettings(this, DEFAULT_SETTINGS);
     });
   }
   saveSettings() {
     return __async(this, null, function* () {
-      let saveData = {};
-      Object.entries(this.settings).forEach((i) => {
-        saveData[i[0]] = i[1].value;
-      });
-      yield this.saveData(saveData);
+      yield saveSettings(this, DEFAULT_SETTINGS);
     });
   }
 };
-var ObsidianColumnsSettings = class extends import_obsidian.PluginSettingTab {
+var ObsidianColumnsSettings = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
   display() {
-    const { containerEl } = this;
-    containerEl.empty();
-    containerEl.createEl("h2", { text: "Settings for obsidian-columns" });
-    let keyvals = Object.entries(DEFAULT_SETTINGS);
-    for (let keyval of keyvals) {
-      let setting = new import_obsidian.Setting(containerEl).setName(keyval[1].name).setDesc(keyval[1].desc);
-      if (typeof keyval[1].value == "boolean") {
-        setting.addToggle((toggle) => toggle.setValue(this.plugin.settings[keyval[0]].value).onChange((bool) => {
-          this.plugin.settings[keyval[0]].value = bool;
-          this.plugin.saveSettings();
-        }));
-      } else {
-        setting.addText((text) => text.setPlaceholder(String(keyval[1].value)).setValue(String(this.plugin.settings[keyval[0]].value)).onChange((value) => {
-          this.plugin.settings[keyval[0]].value = this.plugin.parseObject(value, typeof keyval[1].value);
-          this.plugin.saveSettings();
-        }));
-      }
-    }
+    display(this, DEFAULT_SETTINGS, NAME);
   }
 };
