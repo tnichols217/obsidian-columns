@@ -6,6 +6,10 @@
     white-space: normal
 }
 
+.admonition-content .columnParent {
+    white-space: pre-wrap
+}
+
 .columnChild {
     flex-grow: 1;
     flex-basis: 0px;
