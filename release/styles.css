@@ -3,11 +3,10 @@
     padding: 15px 20px;
     flex-wrap: wrap;
     gap: 20px;
-    white-space: normal
 }
 
-.admonition-content .columnParent {
-    white-space: pre-wrap
+:not(.admonition-content .columnParent).columnParent {
+    white-space: normal
 }
 
 .columnChild {
