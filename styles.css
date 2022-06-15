@@ -5,8 +5,12 @@
     gap: 20px;
 }
 
-:not(.admonition-content .columnParent).columnParent {
-    white-space: normal
+:not(.admonition-content .columnParent).columnParent p {
+    white-space: normal;
+}
+
+.cm-preview-code-block .admonition-content .columnParent p {
+    margin-bottom: -1em !important;
 }
 
 .columnChild {
