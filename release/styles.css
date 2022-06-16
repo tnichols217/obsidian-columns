@@ -5,12 +5,12 @@
     gap: 20px;
 }
 
-:not(.admonition-content .columnParent).columnParent p {
+.columnParent {
     white-space: normal;
 }
 
 .cm-preview-code-block .admonition-content .columnParent p {
-    margin-bottom: -1em !important;
+    white-space: pre-wrap;
 }
 
 .columnChild {
