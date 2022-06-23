@@ -100,6 +100,9 @@ This setting sets the default span value for a column if it is not explicitly sp
 1. Enable syntax highlighting for editor.
 2. Have per column group and per column settings (custom settings for each column)
 
-If you enjoy my plugin, please consider supporting me:
+---
+
+### If you enjoy my plugin, please consider supporting me:
 
 <a href="https://www.buymeacoffee.com/tnichols217" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="217" height="60" /></a>
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D1D0DF7HF)
