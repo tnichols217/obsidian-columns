@@ -1,5 +1,5 @@
-import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, MarkdownPostProcessorContext } from 'obsidian';
-import { SettingItem, display, loadSettings, saveSettings } from 'obsidian-settings/settings'
+import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, MarkdownPostProcessorContext, Editor, MarkdownView, Modal, Setting } from 'obsidian';
+import { SettingItem, display, loadSettings, saveSettings, createSetting } from 'obsidian-settings/settings'
 
 const NAME = "Obsidian Columns"
 const COLUMNNAME = "col"
@@ -48,13 +48,13 @@ export default class ObsidianColumns extends Plugin {
 	}
 
 	settings: ColumnSettings;
-	
+
 	processChild = (c: HTMLElement) => {
 		if (c.firstChild != null && "tagName" in c.firstChild && (c.firstChild as HTMLElement).tagName == "BR") {
 			c.removeChild(c.firstChild)
 		}
 		let firstChild = c
-	
+
 		while (firstChild != null) {
 			if ("style" in firstChild) {
 				firstChild.style.marginTop = "0px"
@@ -128,6 +128,30 @@ export default class ObsidianColumns extends Plugin {
 			})
 		})
 
+		this.addCommand({
+			id: 'insert-column-wrapper',
+			name: 'Insert column wrapper',
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				new ColumnInsertModal(this.app, (result) => {
+					let num = result.numberOfColumns.value;
+					let outString = "````col\n"
+					for (let i = 0; i < num; i++) {
+						outString += "```col-md\nflexGrow=1\n===\n# Column " + i + "\n```\n"
+					}
+					outString += "````\n"
+					editor.replaceSelection(outString);
+				}).open();
+			}
+		});
+
+		this.addCommand({
+			id: 'insert-column',
+			name: 'Insert column',
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				editor.replaceSelection("```col-md\nflexGrow=1\n===\n# New Column\n```");
+			}
+		});
+
 		let processList = (element: Element, context: MarkdownPostProcessorContext) => {
 			for (let child of Array.from(element.children)) {
 				if (child == null) {
@@ -190,6 +214,56 @@ export default class ObsidianColumns extends Plugin {
 
 	async saveSettings() {
 		await saveSettings(this, DEFAULT_SETTINGS)
+	}
+}
+
+
+interface ModalSettings {
+	numberOfColumns: SettingItem<number>,
+}
+
+const DEFAULT_MODAL_SETTINGS: ModalSettings = {
+	numberOfColumns: { value: 2, name: "Number of Columns", desc: "Number of Columns to be made" },
+}
+
+export class ColumnInsertModal extends Modal {
+	onSubmit: (result: ModalSettings) => void;
+
+	constructor(app: App, onSubmit: (result: ModalSettings) => void) {
+		super(app);
+		this.onSubmit = onSubmit;
+	}
+
+	onOpen() {
+		const { contentEl } = this;
+
+		contentEl.createEl("h1", { text: "Create a Column Wrapper" });
+
+
+		let modalSettings: ModalSettings = DEFAULT_MODAL_SETTINGS
+
+		let keyvals = (Object.entries(DEFAULT_MODAL_SETTINGS) as [string, SettingItem<any>][])
+
+		for (let keyval of keyvals) {
+			createSetting(contentEl, keyval, "", (value, key) => {
+				(modalSettings as any)[key].value = value
+			})
+		}
+
+		new Setting(contentEl)
+			.addButton((btn) =>
+				btn
+					.setButtonText("Submit")
+					.setCta()
+					.onClick(() => {
+						this.close();
+						this.onSubmit(modalSettings);
+					}));
+	}
+
+	onClose() {
+		let { contentEl } = this;
+		contentEl.empty();
 	}
 }
 
