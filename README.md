@@ -23,38 +23,58 @@ MD to be rendered
 
 ## Examples
 
-![image](https://user-images.githubusercontent.com/62992267/165693107-a19aa048-62e4-44a2-ad23-3bff41deb865.png)
+![image](https://user-images.githubusercontent.com/62992267/181198772-f9f11e54-d0f2-4a60-a0aa-8ebb364bffe8.png)
 
 Produced by the MD below:
-`````md
-````col
-```col-md
-First column!
-
-- List in column 1
-	1. Item 1
-	2. Item 2
-	3. Item 3
-- Random list items
-- Extra things
-```
-
+````````md
+```````col
+``````col-md
+flexGrow=1
+===
 > [!info] Callouts
 >  Stuff inside the callout
 >  More stuff inside.
 >> [!ERROR] Error description
 >>  Nested callout
->>  ```col-md
+>>  `````col-md
 >>  - example MD code
 >>  - more stuff
->>  ```
+>>  `````
+``````
 
+``````col-md
+flexGrow=2.5
+===
+# Text annotation example:
+
+`````col
+````col-md
+flexGrow=1
+===
+1. Function name **a** should be more descriptive
+
+2. Remove **if/else** by using **||**
+````
+
+````col-md
+flexGrow=2
+===
 ```js
-  let msg = "Hello, world!";
-  console.log(msg)
+function a(word) {
+	if (word != null) {
+		console.log(word);
+	} else {
+		console.log("a");
+	}
+}
+let msg = "Hello, world!";
+console.log(msg)
 ```
 ````
 `````
+``````
+```````
+````````
 
 !!! **Dont forget to use additional backticks when using recursive codeblocks!** Ex: col has 4 ticks and col-md has 3
 
