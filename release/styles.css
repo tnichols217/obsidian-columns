@@ -1,0 +1,19 @@
+.columnParent {
+    display: flex;
+    padding: 15px 20px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.columnParent {
+    white-space: normal;
+}
+
+.cm-preview-code-block .admonition-content .columnParent p {
+    white-space: pre-wrap;
+}
+
+.columnChild {
+    flex-grow: 1;
+    flex-basis: 0px;
+}
