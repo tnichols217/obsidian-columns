@@ -1,11 +1,13 @@
 import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, MarkdownPostProcessorContext, Editor, MarkdownView, Modal, Setting } from 'obsidian';
 import { SettingItem, display, loadSettings, saveSettings, createSetting } from 'obsidian-settings/settings'
+import { eventNames, umask } from 'process';
 
 const NAME = "Obsidian Columns"
 const COLUMNNAME = "col"
 const COLUMNMD = COLUMNNAME + "-md"
 const TOKEN = "!!!"
-const SETTINGSDELIM = "\n===\n"
+const SETTINGSDELIM = "==="
+const COLUMNPADDING = 10
 
 export interface ColumnSettings {
 	wrapSize: SettingItem<number>,
@@ -15,6 +17,28 @@ export interface ColumnSettings {
 const DEFAULT_SETTINGS: ColumnSettings = {
 	wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices" },
 	defaultSpan: { value: 1, name: "The default span of an item", desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting." }
+}
+
+let findSettings = (source: string, unallowed = ["`"], delim = SETTINGSDELIM): {settings: string, source: string} => {
+	let lines = source.split("\n")
+
+	let done = false
+
+	lineLoop: for (let line of lines) {
+		for (let j of unallowed) {
+			if (line.contains(j)) {
+				break lineLoop
+			}
+			if (line == delim) {
+				let split = source.split(delim + "\n")
+				if (split.length > 1) {
+					return {settings: split[0], source: split.slice(1).join(delim)}
+				}
+				break lineLoop
+			}
+		}
+	}
+	return {settings: "", source: source}
 }
 
 let parseSettings = (settings: string) => {
@@ -32,6 +56,12 @@ let parseSettings = (settings: string) => {
 		(o as any)[i[0]] = i[1]
 	})
 	return o
+}
+
+let parseDirtyNumber = (num: string) => {
+	return parseFloat(num.split("")
+		.filter((char: string) => "0123456789.".contains(char))
+		.join(""))
 }
 
 export default class ObsidianColumns extends Plugin {
@@ -76,12 +106,9 @@ export default class ObsidianColumns extends Plugin {
 		this.addSettingTab(new ObsidianColumnsSettings(this.app, this));
 
 		this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
-			let split = source.split(SETTINGSDELIM)
-			let settings = {}
-			if (split.length > 1) {
-				source = split.slice(1).join(SETTINGSDELIM)
-				settings = parseSettings(split[0])
-			}
+			let mdSettings = findSettings(source)
+			let settings = parseSettings(mdSettings.settings)
+			source = mdSettings.source
 
 			const sourcePath = ctx.sourcePath;
 			let child = el.createDiv();
@@ -99,14 +126,24 @@ export default class ObsidianColumns extends Plugin {
 				delete CSS.width
 				this.applyStyle(child, CSS)
 			}
+			if ("height" in settings) {
+				let heightCSS = {} as CSSStyleDeclaration
+				heightCSS.height = (settings as {height: string}).height.toString()
+				heightCSS.overflow = "scroll"
+				this.applyStyle(child, heightCSS)
+			}
 		})
 
-		this.registerMarkdownCodeBlockProcessor(COLUMNNAME, (source, el, ctx) => {
+		this.registerMarkdownCodeBlockProcessor(COLUMNNAME, async (source, el, ctx) => {
+			let mdSettings = findSettings(source)
+			let settings = parseSettings(mdSettings.settings)
+			source = mdSettings.source
+
 			const sourcePath = ctx.sourcePath;
-			let child = createDiv();
+			let child = createDiv()
 			let renderChild = new MarkdownRenderChild(child)
 			ctx.addChild(renderChild)
-			MarkdownRenderer.renderMarkdown(
+			let renderAwait = MarkdownRenderer.renderMarkdown(
 				source,
 				child,
 				sourcePath,
@@ -126,6 +163,31 @@ export default class ObsidianColumns extends Plugin {
 				}
 				this.processChild(c)
 			})
+
+			if ("height" in settings) {
+				let height = (settings as {height: string}).height
+				if (height == "shortest") {
+					await renderAwait
+					let shortest = Math.min(...Array.from(parent.children)
+						.map((c: HTMLElement) => c.childNodes[0])
+						.map((c: HTMLElement) => parseDirtyNumber(getComputedStyle(c).height) + parseDirtyNumber(getComputedStyle(c).lineHeight)))
+					
+					let heightCSS = {} as CSSStyleDeclaration
+					heightCSS.height = shortest + "px"
+					heightCSS.overflow = "scroll"
+					Array.from(parent.children)
+						.map((c: HTMLElement) => c.childNodes[0])
+						.forEach((c: HTMLElement) => {
+							this.applyStyle(c, heightCSS)
+						})
+
+				} else {
+					let heightCSS = {} as CSSStyleDeclaration
+					heightCSS.height = height
+					heightCSS.overflow = "scroll"
+					this.applyStyle(parent, heightCSS)
+				}
+			}
 		})
 
 		this.addCommand({

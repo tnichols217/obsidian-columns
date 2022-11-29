@@ -120,10 +120,30 @@ var NAME = "Obsidian Columns";
 var COLUMNNAME = "col";
 var COLUMNMD = COLUMNNAME + "-md";
 var TOKEN = "!!!";
-var SETTINGSDELIM = "\n===\n";
+var SETTINGSDELIM = "===";
 var DEFAULT_SETTINGS = {
   wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices" },
   defaultSpan: { value: 1, name: "The default span of an item", desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting." }
+};
+var findSettings = (source, unallowed = ["`"], delim = SETTINGSDELIM) => {
+  let lines = source.split("\n");
+  let done = false;
+  lineLoop:
+    for (let line of lines) {
+      for (let j of unallowed) {
+        if (line.contains(j)) {
+          break lineLoop;
+        }
+        if (line == delim) {
+          let split = source.split(delim + "\n");
+          if (split.length > 1) {
+            return { settings: split[0], source: split.slice(1).join(delim) };
+          }
+          break lineLoop;
+        }
+      }
+    }
+  return { settings: "", source };
 };
 var parseSettings = (settings) => {
   let o = {};
@@ -140,6 +160,9 @@ var parseSettings = (settings) => {
     o[i[0]] = i[1];
   });
   return o;
+};
+var parseDirtyNumber = (num) => {
+  return parseFloat(num.split("").filter((char) => "0123456789.".contains(char)).join(""));
 };
 var ObsidianColumns = class extends import_obsidian2.Plugin {
   constructor() {
@@ -179,12 +202,9 @@ var ObsidianColumns = class extends import_obsidian2.Plugin {
       yield this.loadSettings();
       this.addSettingTab(new ObsidianColumnsSettings(this.app, this));
       this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
-        let split = source.split(SETTINGSDELIM);
-        let settings = {};
-        if (split.length > 1) {
-          source = split.slice(1).join(SETTINGSDELIM);
-          settings = parseSettings(split[0]);
-        }
+        let mdSettings = findSettings(source);
+        let settings = parseSettings(mdSettings.settings);
+        source = mdSettings.source;
         const sourcePath = ctx.sourcePath;
         let child = el.createDiv();
         let renderChild = new import_obsidian2.MarkdownRenderChild(child);
@@ -196,13 +216,22 @@ var ObsidianColumns = class extends import_obsidian2.Plugin {
           delete CSS.width;
           this.applyStyle(child, CSS);
         }
+        if ("height" in settings) {
+          let heightCSS = {};
+          heightCSS.height = settings.height.toString();
+          heightCSS.overflow = "scroll";
+          this.applyStyle(child, heightCSS);
+        }
       });
-      this.registerMarkdownCodeBlockProcessor(COLUMNNAME, (source, el, ctx) => {
+      this.registerMarkdownCodeBlockProcessor(COLUMNNAME, (source, el, ctx) => __async(this, null, function* () {
+        let mdSettings = findSettings(source);
+        let settings = parseSettings(mdSettings.settings);
+        source = mdSettings.source;
         const sourcePath = ctx.sourcePath;
         let child = createDiv();
         let renderChild = new import_obsidian2.MarkdownRenderChild(child);
         ctx.addChild(renderChild);
-        import_obsidian2.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
+        let renderAwait = import_obsidian2.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
         let parent = el.createEl("div", { cls: "columnParent" });
         Array.from(child.children).forEach((c) => {
           let cc = parent.createEl("div", { cls: "columnChild" });
@@ -217,7 +246,25 @@ var ObsidianColumns = class extends import_obsidian2.Plugin {
           }
           this.processChild(c);
         });
-      });
+        if ("height" in settings) {
+          let height = settings.height;
+          if (height == "shortest") {
+            yield renderAwait;
+            let shortest = Math.min(...Array.from(parent.children).map((c) => c.childNodes[0]).map((c) => parseDirtyNumber(getComputedStyle(c).height) + parseDirtyNumber(getComputedStyle(c).lineHeight)));
+            let heightCSS = {};
+            heightCSS.height = shortest + "px";
+            heightCSS.overflow = "scroll";
+            Array.from(parent.children).map((c) => c.childNodes[0]).forEach((c) => {
+              this.applyStyle(c, heightCSS);
+            });
+          } else {
+            let heightCSS = {};
+            heightCSS.height = height;
+            heightCSS.overflow = "scroll";
+            this.applyStyle(parent, heightCSS);
+          }
+        }
+      }));
       this.addCommand({
         id: "insert-column-wrapper",
         name: "Insert column wrapper",

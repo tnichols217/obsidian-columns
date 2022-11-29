@@ -9,9 +9,16 @@ The col-md codeblock is just markdown\
 The col codeblock renders each markdown element as its own column.
 - use the md codeblock to group elements as one column
 
-## col-md
-The col-md block has a settings header that is defined as everything above a `===` delimiter
-For example, to set the flexGrow value:
+## Settings Block
+All blocks have a settings header that is defined as everything above a `===` delimiter
+
+- col
+	- height: CSS height or `shortest`
+- col-md
+	- height: CSS height
+	- flexGrow: number
+
+For example, to set the flexGrow value in a col-md block:
 
 ````md
 ```col-md
@@ -20,6 +27,34 @@ flexGrow=2
 MD to be rendered
 ```
 ````
+
+All blocks have a height setting which can limit the height of the codeblock to any CSS height value (ex: 100px)
+
+### col
+The col codeblock can have a height of `shortest`, which limits all columns to the shortest height of its children.
+
+For example:
+`````md
+````col
+height=shortest
+===
+```col-md
+line 1
+line 2
+line 3
+line 4
+```
+
+```col-md
+line 1
+line 2
+```
+````
+`````
+
+### col-md
+The col-md block has an additional flexGrow setting which sets the relative width of the codeblock
+
 
 ## Examples
 
