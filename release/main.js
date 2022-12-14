@@ -137,7 +137,7 @@ var findSettings = (source, unallowed = ["`"], delim = SETTINGSDELIM) => {
         if (line == delim) {
           let split = source.split(delim + "\n");
           if (split.length > 1) {
-            return { settings: split[0], source: split.slice(1).join(delim) };
+            return { settings: split[0], source: split.slice(1).join(delim + "\n") };
           }
           break lineLoop;
         }
@@ -345,6 +345,9 @@ var ObsidianColumns = class extends import_obsidian2.Plugin {
   loadSettings() {
     return __async(this, null, function* () {
       loadSettings(this, DEFAULT_SETTINGS);
+      let r = document.querySelector(":root");
+      r.style.setProperty("--obsidian-columns-min-width", this.settings.wrapSize.value.toString() + "px");
+      r.style.setProperty("--obsidian-columns-def-span", this.settings.defaultSpan.value.toString());
     });
   }
   saveSettings() {

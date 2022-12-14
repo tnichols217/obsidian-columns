@@ -3,13 +3,55 @@
 Allows you to create columns in Obsidian\
 This plugin also works on mobile with a column wrapping feature (that you can enable in settings)
 
+**NEW: Callout syntax** use the col and col-md callouts to make your columns 
+
+Adds a special list syntax to create columns.\
 Adds two codeblock languages: col and col-md.\
-And special list syntax to create columns.\
 The col-md codeblock is just markdown\
 The col codeblock renders each markdown element as its own column.
 - use the md codeblock to group elements as one column
+Adds col and col-md callouts to create columns without javascript
 
-## Settings Block
+## Callout syntax
+The callout syntax uses no javascript at all, which makes it highly compatible with live preview without the use of codeblocks, this also means that the callout syntax cannot limit the height of the columns.
+
+The col callout renders every item in the callout as its own column, but col-md groups them into one column
+
+To use the col callout, create a callout with the col name:
+
+```md
+> [!col]
+> A col callout
+>
+> Second column of the callout
+```
+
+To use the col-md callout, create a col-md callout within the col callout
+```md
+> [!col]
+> A col callout
+>
+>> [!col-md]
+>> The second column of the callout
+>> 
+>> More lines on the second column of the callout
+```
+
+The col-md callout's width can be adjusted by adding the width after the col-md name:
+```md
+> [!col]
+> A col callout
+>
+>> [!col-md-3]
+>> The second column of the callout
+>> 
+>> This column is now 3 times the width of the first column
+```
+The width attribute of the col-md callout can only be multiples of 0.5 up to 10, like 1, 1.5, 6.5, etc. due to limitations of live preview and CSS attr() function.
+
+More columns can be nested within other columns simply by creating a new column within the callout. More examples can be seen below.
+
+## Codeblock Settings Block
 All blocks have a settings header that is defined as everything above a `===` delimiter
 
 - col
@@ -110,8 +152,41 @@ console.log(msg)
 ``````
 ```````
 ````````
-
 !!! **Dont forget to use additional backticks when using recursive codeblocks!** Ex: col has 4 ticks and col-md has 3
+
+or using callout syntax:
+
+````md
+> [!col]
+>> [!info] Callouts
+>> Stuff inside the callout
+>> More stuff inside.
+>>> [!ERROR] Error description
+>>> Nested callout
+>>> - example MD code
+>>> - more stuff
+>
+>> [!col-md-2.5]
+>> # Text annotation example:
+>>> [!col]
+>>>> [!col-md]
+>>>> 1. Function name **a** should be more descriptive
+>>>> 2. Remove **if/else** by using **||**
+>>> 
+>>>> [!col-md-2]
+>>>> ```js
+>>>> function a(word) {
+>>>> 	if (word != null) {
+>>>> 			console.log(word);
+>>>> 	} else {
+>>>> 		console.log("a");
+>>>> 	}
+>>>> }
+>>>> let msg = "Hello, world!";
+>>>> console.log(msg)
+````
+
+## List Structure
 
 You can also create columns by creating a list in the structure shown (not supported in live preview):
 - !!!col

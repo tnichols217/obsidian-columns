@@ -32,7 +32,7 @@ let findSettings = (source: string, unallowed = ["`"], delim = SETTINGSDELIM): {
 			if (line == delim) {
 				let split = source.split(delim + "\n")
 				if (split.length > 1) {
-					return {settings: split[0], source: split.slice(1).join(delim)}
+					return {settings: split[0], source: split.slice(1).join(delim + "\n")}
 				}
 				break lineLoop
 			}
@@ -272,6 +272,9 @@ export default class ObsidianColumns extends Plugin {
 
 	async loadSettings() {
 		loadSettings(this, DEFAULT_SETTINGS)
+		let r = document.querySelector(':root') as HTMLElement;
+		r.style.setProperty('--obsidian-columns-min-width', this.settings.wrapSize.value.toString() + "px");
+		r.style.setProperty('--obsidian-columns-def-span', this.settings.defaultSpan.value.toString());
 	}
 
 	async saveSettings() {
