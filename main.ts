@@ -8,6 +8,8 @@ const COLUMNMD = COLUMNNAME + "-md"
 const TOKEN = "!!!"
 const SETTINGSDELIM = "==="
 const COLUMNPADDING = 10
+const MINWIDTHVARNAME = '--obsidian-columns-min-width'
+const DEFSPANVARNAME = '--obsidian-columns-def-span'
 
 export interface ColumnSettings {
 	wrapSize: SettingItem<number>,
@@ -15,8 +17,22 @@ export interface ColumnSettings {
 }
 
 const DEFAULT_SETTINGS: ColumnSettings = {
-	wrapSize: { value: 100, name: "Minimum width of column", desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices" },
-	defaultSpan: { value: 1, name: "The default span of an item", desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting." }
+	wrapSize: {
+		value: 100,
+		name: "Minimum width of column",
+		desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices",
+		onChange: (val) => {
+			(document.querySelector(':root') as HTMLElement).style.setProperty(MINWIDTHVARNAME, val.toString() + "px")
+		}
+	},
+	defaultSpan: {
+		value: 1,
+		name: "The default span of an item",
+		desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting.",
+		onChange: (val) => {
+			(document.querySelector(':root') as HTMLElement).style.setProperty(DEFSPANVARNAME, val.toString());
+		}
+	}
 }
 
 let findSettings = (source: string, unallowed = ["`"], delim = SETTINGSDELIM): {settings: string, source: string} => {
@@ -271,10 +287,11 @@ export default class ObsidianColumns extends Plugin {
 	}
 
 	async loadSettings() {
-		loadSettings(this, DEFAULT_SETTINGS)
+		await loadSettings(this, DEFAULT_SETTINGS)
 		let r = document.querySelector(':root') as HTMLElement;
-		r.style.setProperty('--obsidian-columns-min-width', this.settings.wrapSize.value.toString() + "px");
-		r.style.setProperty('--obsidian-columns-def-span', this.settings.defaultSpan.value.toString());
+		console.log(this.settings.wrapSize.value.toString())
+		r.style.setProperty(MINWIDTHVARNAME, this.settings.wrapSize.value.toString() + "px");
+		r.style.setProperty(DEFSPANVARNAME, this.settings.defaultSpan.value.toString());
 	}
 
 	async saveSettings() {
