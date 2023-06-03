@@ -56,9 +56,11 @@ All blocks have a settings header that is defined as everything above a `===` de
 
 - col
 	- height: CSS height or `shortest`
+	- textAlign: CSS text-align (`start`, `end`, `center`)
 - col-md
 	- height: CSS height
 	- flexGrow: number
+	- textAlign: CSS text-align (`start`, `end`, `center`)
 
 For example, to set the flexGrow value in a col-md block:
 
@@ -93,6 +95,10 @@ line 2
 ```
 ````
 `````
+
+#### Rows
+
+Use "===" within a `col` codeblock to denote a new row in the column
 
 ### col-md
 The col-md block has an additional flexGrow setting which sets the relative width of the codeblock

@@ -10,6 +10,19 @@ const SETTINGSDELIM = "==="
 const COLUMNPADDING = 10
 const MINWIDTHVARNAME = '--obsidian-columns-min-width'
 const DEFSPANVARNAME = '--obsidian-columns-def-span'
+const CODEBLOCKFENCE = "`"
+
+type COLMDSETTINGS = {
+	flexGrow?: string,
+	height?: string,
+	textAlign?: string
+}
+
+type COLSETTINGS = {
+	height?: string,
+	textAlign?: string,
+	colMax?: string
+}
 
 export interface ColumnSettings {
 	wrapSize: SettingItem<number>,
@@ -57,7 +70,7 @@ let findSettings = (source: string, unallowed = ["`"], delim = SETTINGSDELIM): {
 	return {settings: "", source: source}
 }
 
-let parseSettings = (settings: string) => {
+let parseSettings = <T>(settings: string) => {
 	let o = {}
 	settings.split("\n").map((i) => {
 		return i.split(";")
@@ -71,7 +84,44 @@ let parseSettings = (settings: string) => {
 	}).forEach((i) => {
 		(o as any)[i[0]] = i[1]
 	})
-	return o
+	return o as T
+}
+
+let countBeginning = (source: string) => {
+	let out = 0
+	let letters = source.split("")
+	for (let letter of letters) {
+		if (letter == CODEBLOCKFENCE) {
+			out++
+		} else {
+			break
+		}
+	}
+	return out
+}
+
+let parseRows = (source: string) => {
+	let lines = source.split("\n")
+	let rows = []
+	let curToken = 0
+	let newToken = 0
+	let curRow = []
+	for (let line of lines) {
+		let newCount = countBeginning(line)
+        newToken = newCount < 3 ? 0 : newCount
+		if (curToken == 0 && newToken == 0 && line.startsWith(SETTINGSDELIM)) {
+			rows.push(curRow.join("\n"))
+			curRow = []
+			continue
+		} else if (curToken == 0) {
+			curToken = newToken
+		} else if (curToken == newToken) {
+			curToken = 0
+		}
+		curRow.push(line)
+    }
+    rows.push(curRow.join("\n"))
+	return rows
 }
 
 let parseDirtyNumber = (num: string) => {
@@ -123,7 +173,7 @@ export default class ObsidianColumns extends Plugin {
 
 		this.registerMarkdownCodeBlockProcessor(COLUMNMD, (source, el, ctx) => {
 			let mdSettings = findSettings(source)
-			let settings = parseSettings(mdSettings.settings)
+			let settings = parseSettings<COLMDSETTINGS>(mdSettings.settings)
 			source = mdSettings.source
 
 			const sourcePath = ctx.sourcePath;
@@ -136,72 +186,86 @@ export default class ObsidianColumns extends Plugin {
 				sourcePath,
 				renderChild
 			);
-			if ("flexGrow" in settings) {
+			if (settings.flexGrow != null) {
 				let flexGrow = parseFloat((settings as CSSStyleDeclaration).flexGrow)
 				let CSS = this.generateCssString(flexGrow)
 				delete CSS.width
 				this.applyStyle(child, CSS)
 			}
-			if ("height" in settings) {
+			if (settings.height != null) {
 				let heightCSS = {} as CSSStyleDeclaration
 				heightCSS.height = (settings as {height: string}).height.toString()
 				heightCSS.overflow = "scroll"
 				this.applyStyle(child, heightCSS)
 			}
+			if (settings.textAlign != null) {
+				let alignCSS = {} as CSSStyleDeclaration
+				alignCSS.textAlign = settings.textAlign
+				this.applyStyle(child, alignCSS)
+			}
 		})
 
 		this.registerMarkdownCodeBlockProcessor(COLUMNNAME, async (source, el, ctx) => {
 			let mdSettings = findSettings(source)
-			let settings = parseSettings(mdSettings.settings)
-			source = mdSettings.source
+			let settings = parseSettings<COLSETTINGS>(mdSettings.settings)
+			let rowSource = parseRows(mdSettings.source)
 
-			const sourcePath = ctx.sourcePath;
-			let child = createDiv()
-			let renderChild = new MarkdownRenderChild(child)
-			ctx.addChild(renderChild)
-			let renderAwait = MarkdownRenderer.renderMarkdown(
-				source,
-				child,
-				sourcePath,
-				renderChild
-			);
-			let parent = el.createEl("div", { cls: "columnParent" });
-			Array.from(child.children).forEach((c: HTMLElement) => {
-				let cc = parent.createEl("div", { cls: "columnChild" })
-				let renderCc = new MarkdownRenderChild(cc)
-				ctx.addChild(renderCc)
-				this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value))
-				cc.appendChild(c)
-				if (c.classList.contains("block-language-" + COLUMNMD) && (c.childNodes[0] as HTMLElement).style.flexGrow != "") {
-					cc.style.flexGrow = (c.childNodes[0] as HTMLElement).style.flexGrow
-					cc.style.flexBasis = (c.childNodes[0] as HTMLElement).style.flexBasis
-					cc.style.width = (c.childNodes[0] as HTMLElement).style.flexBasis
+			console.log(rowSource)
+
+			for (let source of rowSource) {
+				const sourcePath = ctx.sourcePath;
+				let child = createDiv()
+				let renderChild = new MarkdownRenderChild(child)
+				ctx.addChild(renderChild)
+				let renderAwait = MarkdownRenderer.renderMarkdown(
+					source,
+					child,
+					sourcePath,
+					renderChild
+				);
+				let parent = el.createEl("div", { cls: "columnParent" });
+				Array.from(child.children).forEach((c: HTMLElement) => {
+					let cc = parent.createEl("div", { cls: "columnChild" })
+					let renderCc = new MarkdownRenderChild(cc)
+					ctx.addChild(renderCc)
+					this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value))
+					cc.appendChild(c)
+					if (c.classList.contains("block-language-" + COLUMNMD) && (c.childNodes[0] as HTMLElement).style.flexGrow != "") {
+						cc.style.flexGrow = (c.childNodes[0] as HTMLElement).style.flexGrow
+						cc.style.flexBasis = (c.childNodes[0] as HTMLElement).style.flexBasis
+						cc.style.width = (c.childNodes[0] as HTMLElement).style.flexBasis
+					}
+					this.processChild(c)
+				})
+
+				if (settings.height != null) {
+					let height = (settings as {height: string}).height
+					if (height == "shortest") {
+						await renderAwait
+						let shortest = Math.min(...Array.from(parent.children)
+							.map((c: HTMLElement) => c.childNodes[0])
+							.map((c: HTMLElement) => parseDirtyNumber(getComputedStyle(c).height) + parseDirtyNumber(getComputedStyle(c).lineHeight)))
+						
+							let heightCSS = {} as CSSStyleDeclaration
+							heightCSS.height = shortest + "px"
+							heightCSS.overflow = "scroll"
+							Array.from(parent.children)
+							.map((c: HTMLElement) => c.childNodes[0])
+							.forEach((c: HTMLElement) => {
+								this.applyStyle(c, heightCSS)
+							})
+							
+						} else {
+							let heightCSS = {} as CSSStyleDeclaration
+							heightCSS.height = height
+							heightCSS.overflow = "scroll"
+							this.applyStyle(parent, heightCSS)
+						}
 				}
-				this.processChild(c)
-			})
-
-			if ("height" in settings) {
-				let height = (settings as {height: string}).height
-				if (height == "shortest") {
-					await renderAwait
-					let shortest = Math.min(...Array.from(parent.children)
-						.map((c: HTMLElement) => c.childNodes[0])
-						.map((c: HTMLElement) => parseDirtyNumber(getComputedStyle(c).height) + parseDirtyNumber(getComputedStyle(c).lineHeight)))
-					
-					let heightCSS = {} as CSSStyleDeclaration
-					heightCSS.height = shortest + "px"
-					heightCSS.overflow = "scroll"
-					Array.from(parent.children)
-						.map((c: HTMLElement) => c.childNodes[0])
-						.forEach((c: HTMLElement) => {
-							this.applyStyle(c, heightCSS)
-						})
-
-				} else {
-					let heightCSS = {} as CSSStyleDeclaration
-					heightCSS.height = height
-					heightCSS.overflow = "scroll"
-					this.applyStyle(parent, heightCSS)
+				if (settings.textAlign != null) {
+					let alignCSS = {} as CSSStyleDeclaration
+					alignCSS.textAlign = settings.textAlign
+					this.applyStyle(parent, alignCSS)
 				}
 			}
 		})

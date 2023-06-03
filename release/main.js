@@ -128,6 +128,7 @@ var TOKEN = "!!!";
 var SETTINGSDELIM = "===";
 var MINWIDTHVARNAME = "--obsidian-columns-min-width";
 var DEFSPANVARNAME = "--obsidian-columns-def-span";
+var CODEBLOCKFENCE = "`";
 var DEFAULT_SETTINGS = {
   wrapSize: {
     value: 100,
@@ -182,6 +183,41 @@ var parseSettings = (settings) => {
   });
   return o;
 };
+var countBeginning = (source) => {
+  let out = 0;
+  let letters = source.split("");
+  for (let letter of letters) {
+    if (letter == CODEBLOCKFENCE) {
+      out++;
+    } else {
+      break;
+    }
+  }
+  return out;
+};
+var parseRows = (source) => {
+  let lines = source.split("\n");
+  let rows = [];
+  let curToken = 0;
+  let newToken = 0;
+  let curRow = [];
+  for (let line of lines) {
+    let newCount = countBeginning(line);
+    newToken = newCount < 3 ? 0 : newCount;
+    if (curToken == 0 && newToken == 0 && line.startsWith(SETTINGSDELIM)) {
+      rows.push(curRow.join("\n"));
+      curRow = [];
+      continue;
+    } else if (curToken == 0) {
+      curToken = newToken;
+    } else if (curToken == newToken) {
+      curToken = 0;
+    }
+    curRow.push(line);
+  }
+  rows.push(curRow.join("\n"));
+  return rows;
+};
 var parseDirtyNumber = (num) => {
   return parseFloat(num.split("").filter((char) => "0123456789.".contains(char)).join(""));
 };
@@ -231,58 +267,71 @@ var ObsidianColumns = class extends import_obsidian2.Plugin {
         let renderChild = new import_obsidian2.MarkdownRenderChild(child);
         ctx.addChild(renderChild);
         import_obsidian2.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
-        if ("flexGrow" in settings) {
+        if (settings.flexGrow != null) {
           let flexGrow = parseFloat(settings.flexGrow);
           let CSS = this.generateCssString(flexGrow);
           delete CSS.width;
           this.applyStyle(child, CSS);
         }
-        if ("height" in settings) {
+        if (settings.height != null) {
           let heightCSS = {};
           heightCSS.height = settings.height.toString();
           heightCSS.overflow = "scroll";
           this.applyStyle(child, heightCSS);
         }
+        if (settings.textAlign != null) {
+          let alignCSS = {};
+          alignCSS.textAlign = settings.textAlign;
+          this.applyStyle(child, alignCSS);
+        }
       });
       this.registerMarkdownCodeBlockProcessor(COLUMNNAME, (source, el, ctx) => __async(this, null, function* () {
         let mdSettings = findSettings(source);
         let settings = parseSettings(mdSettings.settings);
-        source = mdSettings.source;
-        const sourcePath = ctx.sourcePath;
-        let child = createDiv();
-        let renderChild = new import_obsidian2.MarkdownRenderChild(child);
-        ctx.addChild(renderChild);
-        let renderAwait = import_obsidian2.MarkdownRenderer.renderMarkdown(source, child, sourcePath, renderChild);
-        let parent = el.createEl("div", { cls: "columnParent" });
-        Array.from(child.children).forEach((c) => {
-          let cc = parent.createEl("div", { cls: "columnChild" });
-          let renderCc = new import_obsidian2.MarkdownRenderChild(cc);
-          ctx.addChild(renderCc);
-          this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value));
-          cc.appendChild(c);
-          if (c.classList.contains("block-language-" + COLUMNMD) && c.childNodes[0].style.flexGrow != "") {
-            cc.style.flexGrow = c.childNodes[0].style.flexGrow;
-            cc.style.flexBasis = c.childNodes[0].style.flexBasis;
-            cc.style.width = c.childNodes[0].style.flexBasis;
+        let rowSource = parseRows(mdSettings.source);
+        console.log(rowSource);
+        for (let source2 of rowSource) {
+          const sourcePath = ctx.sourcePath;
+          let child = createDiv();
+          let renderChild = new import_obsidian2.MarkdownRenderChild(child);
+          ctx.addChild(renderChild);
+          let renderAwait = import_obsidian2.MarkdownRenderer.renderMarkdown(source2, child, sourcePath, renderChild);
+          let parent = el.createEl("div", { cls: "columnParent" });
+          Array.from(child.children).forEach((c) => {
+            let cc = parent.createEl("div", { cls: "columnChild" });
+            let renderCc = new import_obsidian2.MarkdownRenderChild(cc);
+            ctx.addChild(renderCc);
+            this.applyStyle(cc, this.generateCssString(this.settings.defaultSpan.value));
+            cc.appendChild(c);
+            if (c.classList.contains("block-language-" + COLUMNMD) && c.childNodes[0].style.flexGrow != "") {
+              cc.style.flexGrow = c.childNodes[0].style.flexGrow;
+              cc.style.flexBasis = c.childNodes[0].style.flexBasis;
+              cc.style.width = c.childNodes[0].style.flexBasis;
+            }
+            this.processChild(c);
+          });
+          if (settings.height != null) {
+            let height = settings.height;
+            if (height == "shortest") {
+              yield renderAwait;
+              let shortest = Math.min(...Array.from(parent.children).map((c) => c.childNodes[0]).map((c) => parseDirtyNumber(getComputedStyle(c).height) + parseDirtyNumber(getComputedStyle(c).lineHeight)));
+              let heightCSS = {};
+              heightCSS.height = shortest + "px";
+              heightCSS.overflow = "scroll";
+              Array.from(parent.children).map((c) => c.childNodes[0]).forEach((c) => {
+                this.applyStyle(c, heightCSS);
+              });
+            } else {
+              let heightCSS = {};
+              heightCSS.height = height;
+              heightCSS.overflow = "scroll";
+              this.applyStyle(parent, heightCSS);
+            }
           }
-          this.processChild(c);
-        });
-        if ("height" in settings) {
-          let height = settings.height;
-          if (height == "shortest") {
-            yield renderAwait;
-            let shortest = Math.min(...Array.from(parent.children).map((c) => c.childNodes[0]).map((c) => parseDirtyNumber(getComputedStyle(c).height) + parseDirtyNumber(getComputedStyle(c).lineHeight)));
-            let heightCSS = {};
-            heightCSS.height = shortest + "px";
-            heightCSS.overflow = "scroll";
-            Array.from(parent.children).map((c) => c.childNodes[0]).forEach((c) => {
-              this.applyStyle(c, heightCSS);
-            });
-          } else {
-            let heightCSS = {};
-            heightCSS.height = height;
-            heightCSS.overflow = "scroll";
-            this.applyStyle(parent, heightCSS);
+          if (settings.textAlign != null) {
+            let alignCSS = {};
+            alignCSS.textAlign = settings.textAlign;
+            this.applyStyle(parent, alignCSS);
           }
         }
       }));
