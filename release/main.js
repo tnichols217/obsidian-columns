@@ -351,10 +351,46 @@ var ObsidianColumns = class extends import_obsidian2.Plugin {
         }
       });
       this.addCommand({
+        id: "insert-quick-column-wrapper",
+        name: "Insert quick column wrapper",
+        editorCallback: (editor, view) => {
+          let selectedText = editor.getSelection(); // Get the currently selected text
+          let cursorPosition = editor.getCursor(); // Get the current cursor position
+          
+          // Construct the string with the selected text placed in the specified location
+          let outString = "````col\n```col-md\nflexGrow=1\n===\n" + selectedText + "\n```\n````\n";
+          
+          editor.replaceSelection(outString); // Replace the selection with the constructed string
+          
+          // If there was no selected text, place the cursor on the specified line, else place it after the inserted string
+          if (selectedText === "") {
+            editor.setCursor({ line: cursorPosition.line + 4, ch: 0 }); // Place the cursor on the specified line
+          } else {
+            let lines = selectedText.split('\n').length; // Calculate the number of lines in the selected text
+            editor.setCursor({ line: cursorPosition.line + 4 + lines - 1, ch: selectedText.length - selectedText.lastIndexOf('\n') - 1 }); // Place the cursor after the inserted string
+          }
+        }
+      });
+      this.addCommand({
         id: "insert-column",
         name: "Insert column",
         editorCallback: (editor, view) => {
-          editor.replaceSelection("```col-md\nflexGrow=1\n===\n# New Column\n```");
+          let selectedText = editor.getSelection(); // Get the currently selected text
+          let cursorPosition = editor.getCursor(); // Get the current cursor position
+          
+          let outString;
+          if (selectedText === "") {
+            // If there is no selected text, insert a new column with a placeholder
+            outString = "```col-md\nflexGrow=1\n===\n# New Column\n\n```";
+            editor.replaceSelection(outString); // Replace the selection with the constructed string
+            editor.setCursor({ line: cursorPosition.line + 4, ch: 0 }); // Place the cursor on the new line after # New Column
+          } else {
+            // If there is selected text, place it in the specified location
+            outString = "```col-md\nflexGrow=1\n===\n" + selectedText + "\n```";
+            editor.replaceSelection(outString); // Replace the selection with the constructed string
+            let lines = selectedText.split('\n').length; // Calculate the number of lines in the selected text
+            editor.setCursor({ line: cursorPosition.line + lines + 2, ch: selectedText.length - selectedText.lastIndexOf('\n') - 1 }); // Place the cursor after the last character of the selected text
+          }
         }
       });
       let processList = (element, context) => {
