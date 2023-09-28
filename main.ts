@@ -1,6 +1,6 @@
 import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, MarkdownPostProcessorContext, Editor, MarkdownView, Modal, Setting } from 'obsidian';
+//@ts-ignore
 import { SettingItem, display, loadSettings, saveSettings, createSetting } from 'obsidian-settings/settings'
-import { eventNames, umask } from 'process';
 
 const NAME = "Obsidian Columns"
 const COLUMNNAME = "col"
@@ -34,7 +34,7 @@ const DEFAULT_SETTINGS: ColumnSettings = {
 		value: 100,
 		name: "Minimum width of column",
 		desc: "Columns will have this minimum width before wrapping to a new row. 0 disables column wrapping. Useful for smaller devices",
-		onChange: (val) => {
+		onChange: (val: any) => {
 			(document.querySelector(':root') as HTMLElement).style.setProperty(MINWIDTHVARNAME, val.toString() + "px")
 		}
 	},
@@ -42,7 +42,7 @@ const DEFAULT_SETTINGS: ColumnSettings = {
 		value: 1,
 		name: "The default span of an item",
 		desc: "The default width of a column. If the minimum width is specified, the width of the column will be multiplied by this setting.",
-		onChange: (val) => {
+		onChange: (val: any) => {
 			(document.querySelector(':root') as HTMLElement).style.setProperty(DEFSPANVARNAME, val.toString());
 		}
 	}
@@ -391,7 +391,7 @@ export class ColumnInsertModal extends Modal {
 		let keyvals = (Object.entries(DEFAULT_MODAL_SETTINGS) as [string, SettingItem<any>][])
 
 		for (let keyval of keyvals) {
-			createSetting(contentEl, keyval, "", (value, key) => {
+			createSetting(contentEl, keyval, "", (value: any, key: any) => {
 				(modalSettings as any)[key].value = value
 			})
 		}

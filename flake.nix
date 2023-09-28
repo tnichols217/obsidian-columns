@@ -13,6 +13,8 @@
           yarn
           nodePackages.npm
           nodePackages.nodemon
+          nodePackages.typescript
+          esbuild
         ];
         buildInputs = [ ];
       };
