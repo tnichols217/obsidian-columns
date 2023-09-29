@@ -1,5 +1,4 @@
 import { Plugin, MarkdownRenderChild, MarkdownRenderer, PluginSettingTab, App, MarkdownPostProcessorContext, Editor, MarkdownView, Modal, Setting } from 'obsidian';
-//@ts-ignore
 import { SettingItem, display, loadSettings, saveSettings, createSetting } from 'obsidian-settings/settings'
 
 const NAME = "Obsidian Columns"
@@ -48,7 +47,7 @@ const DEFAULT_SETTINGS: ColumnSettings = {
 	}
 }
 
-let findSettings = (source: string, unallowed = ["`"], delim = SETTINGSDELIM): {settings: string, source: string} => {
+let findSettings = (source: string, unallowed = ["`"], delim = SETTINGSDELIM): { settings: string, source: string } => {
 	let lines = source.split("\n")
 
 	let done = false
@@ -61,13 +60,13 @@ let findSettings = (source: string, unallowed = ["`"], delim = SETTINGSDELIM): {
 			if (line == delim) {
 				let split = source.split(delim + "\n")
 				if (split.length > 1) {
-					return {settings: split[0], source: split.slice(1).join(delim + "\n")}
+					return { settings: split[0], source: split.slice(1).join(delim + "\n") }
 				}
 				break lineLoop
 			}
 		}
 	}
-	return {settings: "", source: source}
+	return { settings: "", source: source }
 }
 
 let parseSettings = <T>(settings: string) => {
@@ -108,7 +107,7 @@ let parseRows = (source: string) => {
 	let curRow = []
 	for (let line of lines) {
 		let newCount = countBeginning(line)
-        newToken = newCount < 3 ? 0 : newCount
+		newToken = newCount < 3 ? 0 : newCount
 		if (curToken == 0 && newToken == 0 && line.startsWith(SETTINGSDELIM)) {
 			rows.push(curRow.join("\n"))
 			curRow = []
@@ -119,8 +118,8 @@ let parseRows = (source: string) => {
 			curToken = 0
 		}
 		curRow.push(line)
-    }
-    rows.push(curRow.join("\n"))
+	}
+	rows.push(curRow.join("\n"))
 	return rows
 }
 
@@ -194,7 +193,7 @@ export default class ObsidianColumns extends Plugin {
 			}
 			if (settings.height != null) {
 				let heightCSS = {} as CSSStyleDeclaration
-				heightCSS.height = (settings as {height: string}).height.toString()
+				heightCSS.height = (settings as { height: string }).height.toString()
 				heightCSS.overflow = "scroll"
 				this.applyStyle(child, heightCSS)
 			}
@@ -239,28 +238,28 @@ export default class ObsidianColumns extends Plugin {
 				})
 
 				if (settings.height != null) {
-					let height = (settings as {height: string}).height
+					let height = (settings as { height: string }).height
 					if (height == "shortest") {
 						await renderAwait
 						let shortest = Math.min(...Array.from(parent.children)
 							.map((c: HTMLElement) => c.childNodes[0])
 							.map((c: HTMLElement) => parseDirtyNumber(getComputedStyle(c).height) + parseDirtyNumber(getComputedStyle(c).lineHeight)))
-						
-							let heightCSS = {} as CSSStyleDeclaration
-							heightCSS.height = shortest + "px"
-							heightCSS.overflow = "scroll"
-							Array.from(parent.children)
+
+						let heightCSS = {} as CSSStyleDeclaration
+						heightCSS.height = shortest + "px"
+						heightCSS.overflow = "scroll"
+						Array.from(parent.children)
 							.map((c: HTMLElement) => c.childNodes[0])
 							.forEach((c: HTMLElement) => {
 								this.applyStyle(c, heightCSS)
 							})
-							
-						} else {
-							let heightCSS = {} as CSSStyleDeclaration
-							heightCSS.height = height
-							heightCSS.overflow = "scroll"
-							this.applyStyle(parent, heightCSS)
-						}
+
+					} else {
+						let heightCSS = {} as CSSStyleDeclaration
+						heightCSS.height = height
+						heightCSS.overflow = "scroll"
+						this.applyStyle(parent, heightCSS)
+					}
 				}
 				if (settings.textAlign != null) {
 					let alignCSS = {} as CSSStyleDeclaration
@@ -271,28 +270,65 @@ export default class ObsidianColumns extends Plugin {
 		})
 
 		this.addCommand({
-			id: 'insert-column-wrapper',
-			name: 'Insert column wrapper',
+			id: "insert-column-wrapper",
+			name: "Insert column wrapper",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
 				new ColumnInsertModal(this.app, (result) => {
-					let num = result.numberOfColumns.value;
+					let num = result.numberOfColumns.value
 					let outString = "````col\n"
 					for (let i = 0; i < num; i++) {
 						outString += "```col-md\nflexGrow=1\n===\n# Column " + i + "\n```\n"
 					}
 					outString += "````\n"
-					editor.replaceSelection(outString);
-				}).open();
+					editor.replaceSelection(outString)
+				}).open()
 			}
-		});
+		})
 
 		this.addCommand({
-			id: 'insert-column',
-			name: 'Insert column',
+			id: "insert-quick-column-wrapper",
+			name: "Insert quick column wrapper",
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				editor.replaceSelection("```col-md\nflexGrow=1\n===\n# New Column\n```");
+				let selectedText = editor.getSelection() // Get the currently selected text
+				let cursorPosition = editor.getCursor() // Get the current cursor position
+
+				// Construct the string with the selected text placed in the specified location
+				let outString = "````col\n```col-md\nflexGrow=1\n===\n" + selectedText + "\n```\n````\n"
+
+				editor.replaceSelection(outString) // Replace the selection with the constructed string
+
+				// If there was no selected text, place the cursor on the specified line, else place it after the inserted string
+				if (selectedText === "") {
+					editor.setCursor({ line: cursorPosition.line + 4, ch: 0 }) // Place the cursor on the specified line
+				} else {
+					let lines = selectedText.split('\n').length // Calculate the number of lines in the selected text
+					editor.setCursor({ line: cursorPosition.line + 4 + lines - 1, ch: selectedText.length - selectedText.lastIndexOf('\n') - 1 }) // Place the cursor after the inserted string
+				}
 			}
-		});
+		})
+
+		this.addCommand({
+			id: "insert-column",
+			name: "Insert column",
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				let selectedText = editor.getSelection() // Get the currently selected text
+				let cursorPosition = editor.getCursor() // Get the current cursor position
+
+				let outString
+				if (selectedText === "") {
+					// If there is no selected text, insert a new column with a placeholder
+					outString = "```col-md\nflexGrow=1\n===\n# New Column\n\n```"
+					editor.replaceSelection(outString); // Replace the selection with the constructed string
+					editor.setCursor({ line: cursorPosition.line + 4, ch: 0 }) // Place the cursor on the new line after # New Column
+				} else {
+					// If there is selected text, place it in the specified location
+					outString = "```col-md\nflexGrow=1\n===\n" + selectedText + "\n```"
+					editor.replaceSelection(outString); // Replace the selection with the constructed string
+					let lines = selectedText.split('\n').length // Calculate the number of lines in the selected text
+					editor.setCursor({ line: cursorPosition.line + lines + 2, ch: selectedText.length - selectedText.lastIndexOf('\n') - 1 }) // Place the cursor after the last character of the selected text
+				}
+			}
+		})
 
 		let processList = (element: Element, context: MarkdownPostProcessorContext) => {
 			for (let child of Array.from(element.children)) {
