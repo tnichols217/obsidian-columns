@@ -124,3 +124,21 @@ div[data-callout="col"].callout > div.callout-content > div[data-callout$="-9.5"
 div[data-callout="col"].callout > div.callout-content > div[data-callout$="-10" ].callout {
     --obsidian-columns-custom-span: 10
 }
+
+/*Starting From Tablet View Have 1 Column instead. */
+@media screen and (max-width:1367px){
+    :root {
+        --obsidian-columns-min-width: 1000px !important;
+    }
+
+    .columnChild, div[data-callout="col"].callout > div.callout-content > * {
+        flex-basis: calc(var(--obsidian-columns-min-width) * var(--obsidian-columns-def-span)) !important;
+        width: calc(var(--obsidian-columns-min-width) * var(--obsidian-columns-def-span)) !important;
+    }
+    
+    div[data-callout="col"].callout > div.callout-content > div[data-callout^="col-md" ].callout {
+        flex-basis: calc(var(--obsidian-columns-min-width) * var(--obsidian-columns-custom-span)) !important;
+        width: calc(var(--obsidian-columns-min-width) * var(--obsidian-columns-custom-span)) !important;
+    }
+
+}
