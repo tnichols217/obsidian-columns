@@ -173,8 +173,8 @@ available properties are:
 - borderColor: (Default: `white`) CSS color
 - borderStyle: (Default: `solid`) CSS border-style
 - borderWidth: (Default: `1px`) CSS border-width. If no unit is specified, `px` is assumed
-- borderRadius: (Default: `0px`) CSS border-radius. If no unit is specified, `px` is assumed
-- borderPadding: (Default: `0px`) CSS padding. If no unit is specified, `px` is assumed
+- borderRadius: (Default: `0`) CSS border-radius. If no unit is specified, `px` is assumed
+- borderPadding: (Default: `0`) CSS padding. If no unit is specified, `px` is assumed
 
 ## Examples
 
