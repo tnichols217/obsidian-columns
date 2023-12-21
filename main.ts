@@ -11,17 +11,25 @@ const MINWIDTHVARNAME = '--obsidian-columns-min-width'
 const DEFSPANVARNAME = '--obsidian-columns-def-span'
 const CODEBLOCKFENCE = "`"
 
+type BORDERSETTINGS = {
+	borderColor?: string,
+	borderStyle?: string,
+	borderWidth?: string,
+	borderRadius?: string,
+	borderPadding?: string,
+}
+
 type COLMDSETTINGS = {
 	flexGrow?: string,
 	height?: string,
-	textAlign?: string
-}
+	textAlign?: string,
+} & BORDERSETTINGS
 
 type COLSETTINGS = {
 	height?: string,
 	textAlign?: string,
 	colMax?: string
-}
+} & BORDERSETTINGS
 
 export interface ColumnSettings {
 	wrapSize: SettingItem<number>,
@@ -202,6 +210,7 @@ export default class ObsidianColumns extends Plugin {
 				alignCSS.textAlign = settings.textAlign
 				this.applyStyle(child, alignCSS)
 			}
+			this.applyPotentialBorderStyling(settings, child);
 		})
 
 		this.registerMarkdownCodeBlockProcessor(COLUMNNAME, async (source, el, ctx) => {
@@ -266,6 +275,7 @@ export default class ObsidianColumns extends Plugin {
 					alignCSS.textAlign = settings.textAlign
 					this.applyStyle(parent, alignCSS)
 				}
+				this.applyPotentialBorderStyling(settings, parent);
 			}
 		})
 
@@ -380,6 +390,35 @@ export default class ObsidianColumns extends Plugin {
 		}
 
 		this.registerMarkdownPostProcessor((element, context) => { processList(element, context) });
+	}
+
+	private applyPotentialBorderStyling(settings: COLMDSETTINGS | COLSETTINGS, child: HTMLDivElement) {
+		const hasBorder = settings.borderColor != null
+			|| settings.borderStyle != null
+			|| settings.borderWidth != null
+			|| settings.borderRadius != null
+			|| settings.borderPadding != null;
+
+		if (hasBorder) {
+			let borderCSS = {} as CSSStyleDeclaration
+			borderCSS.borderColor = settings.borderColor ?? "white";
+			borderCSS.borderStyle = settings.borderStyle ?? "solid";
+			borderCSS.borderWidth = this.parseBorderSizeInput(settings.borderWidth, "1px");
+			borderCSS.borderRadius = this.parseBorderSizeInput(settings.borderRadius);
+			borderCSS.padding = this.parseBorderSizeInput(settings.borderPadding);
+			this.applyStyle(child, borderCSS)
+		}
+	}
+
+	private parseBorderSizeInput(input: string, defaultSize = "0"): string {
+		if (input == null) {
+			return defaultSize;
+		}
+		if (!+input) {
+			return input;
+		}
+
+		return input + "px";
 	}
 
 	onunload() {
