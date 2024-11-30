@@ -1,6 +1,6 @@
 {
 	"name": "columns",
-	"version": "1.6.0",
+	"version": "1.6.1",
 	"description": "Allows you to create columns in Obsidian Markdown (https://github.com/tnichols217/obsidian-columns)",
 	"main": "main.js",
 	"scripts": {
