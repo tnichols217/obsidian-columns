@@ -1,5 +1,5 @@
 {
-	"id": "columns",
+	"id": "obsidian-columns",
 	"name": "Columns",
 	"minAppVersion": "0.12.0",
 	"description": "Allows you to create columns in Obsidian Markdown",
