@@ -1,6 +1,6 @@
 :root {
     --obsidian-columns-gap: 20px;
-    --obsidian-columns-padding: 15px 20px;
+    --obsidian-columns-padding: 0 20px;
     --obsidian-columns-min-width: 100px;
     --obsidian-columns-def-span: 1;
 }
